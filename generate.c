@@ -3,9 +3,31 @@
 #include <stdlib.h>
 #include <time.h>
 #include <malloc.h>
+#define N_NUM_BITS 64
 #define RSA_NUM_BITS 32
 #define E_NUM_BITS 17
 #define DEBUG 1
+#define PUB_KEY_BUF_LEN 2048
+
+
+void encrypt(mpz_t m, mpz_t e, mpz_t c, mpz_t n)
+{
+		mpz_t res;
+		mpz_init(res);
+		mpz_init_set_si(res , 1L);
+		for(int i = 0 ; i < N_NUM_BITS; i ++)
+		{
+				if(mpz_tstbit(e, i) == 1)
+				{
+					mpz_mul(res, res, m);
+					mpz_mod(res, res, n);
+				}
+				mpz_mul(m, m ,m); 
+				mpz_mod(m, m , n);
+		}
+		mpz_init_set(c, res);
+}
+
 
 int applyExtendedEuclid(mpz_t e, mpz_t phi, mpz_t d)
 {
@@ -18,7 +40,6 @@ int applyExtendedEuclid(mpz_t e, mpz_t phi, mpz_t d)
 	mpz_init(x);
 	mpz_init(y);
 	mpz_init(z);
-	
 	mpz_init(a);
 	mpz_init(b);
 	mpz_init(c);
@@ -74,7 +95,7 @@ int applyExtendedEuclid(mpz_t e, mpz_t phi, mpz_t d)
 	}
 	else
 	{
-		mpz_init_set(d, tx);
+		mpz_init_set(d, ty);
 		return 1;
 	}
 }
@@ -83,20 +104,28 @@ int main()
 {
 	/*TODO: How will the numbers chosen be of "similar bit length" ?
 	 */
-		mpz_t p, q, n, phi, decp, decq, e, d;
+		mpz_t p, q, n, phi, decp, decq, e, d, c, m, t , m2, res, k;
 		gmp_randstate_t randomState;
 		int isPrimeP = 0, isPrimeQ = 0;
 		
 		//initialising random values
 		mpz_init(p);
+		mpz_init(k);
+		mpz_init(m);
+		mpz_init(c);
+		mpz_init(res);
 		mpz_init(q);
 		mpz_init(n);
+		mpz_init(t);
+		mpz_init(m2);
 		mpz_init(decp);
 		mpz_init(decq);
 		mpz_init(phi);
 		mpz_init(e);
 		mpz_init(d);
 		mpz_init_set_si(e, 65537L);
+		mpz_init_set_si(m , 5L);
+		mpz_init_set_si(m2 , 5L);
 		//seeding random value
 		gmp_randinit_default(randomState);
 		gmp_randseed_ui(randomState, time(0));
@@ -167,6 +196,37 @@ int main()
 			mpz_out_str(NULL, 10, d);
 			printf("\n");
 		#endif
+		encrypt(m, e, c, n);
+		
+	//	mpz_powm(res, m2 ,e, n);
+		
+		#if DEBUG
+			printf("Cipher1\n");
+			mpz_out_str(NULL, 10, c);
+			
+			printf("Cipher2\n");
+			mpz_out_str(NULL, 10, res);
+			
+			
+			printf("\n");
+		#endif
+	//	mpz_init_set(k, c);
+		
+		encrypt(c, d, t, n); 
+		
+	//	mpz_powm(res, k ,d, n);
+		#if DEBUG
+			printf("dec\n");
+			mpz_out_str(NULL, 10, t);
+			printf("\n");
+			printf("dec 2\n");
+			mpz_out_str(NULL, 10, res);
+		#endif
+		
+		bool* pubKeyBuf = new bool[PUB_KEY_BUF_LEN];
+		int pub_key_ptr = PUB_KEY_BUF_LEN - 1;
 		return 0;
 }
+
+
 
