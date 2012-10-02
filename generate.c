@@ -19,19 +19,20 @@
 #define TAG_BIT_STRING 3
 #define TAG_NULL 5
 #define TAG_OID 6
+#define PRIV_KEY_BUF_LEN 2048
 void displayBuffer(int* buf, int index, int maxIndex);
 void appendIdentifierOctet(int tag, int type, int class, int* buf, int* index);
 int appendLengthToBuffer(int value, int* buf, int *index);
-int addNToPublicKeyBuffer(mpz_t n, int* buf, int* index);
+int addMpz_tToBuffer(mpz_t n, int* buf, int* index, int numBits);
 void addNullOctet(int* buf, int* index);
 void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength);
 void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid);
-void writePublicKeyBuffer(int *buf, int index, int maxIndex);
+void writeKeyBuffer(int *buf, int index, int maxIndex, int type);
 
 const char* rsaEncryptionObjectIndentifierValue = "2A864886F70D010101";
 /*
  * 
-	Sample 64 bit certificate
+	Sample 64 bit certificate - public key
 	
 	0:d=0  hl=2 l=  36 cons: SEQUENCE          
     2:d=1  hl=2 l=  13 cons: SEQUENCE          
@@ -161,14 +162,19 @@ int main()
 {
 	/*TODO: How will the numbers chosen be of "similar bit length" ?
 	 */
-		mpz_t p, q, n, phi, decp, decq, e, d, c, m, t , m2, res, k;
+		mpz_t p, q, n, phi, decp, decq, e, d, c, m, t , m2, res, k, qinverseModP, exponent1, exponent2;
 		gmp_randstate_t randomState;
-		int isPrimeP = 0, isPrimeQ = 0, i, extraOctetAdded, numOctetsAdded = 0,  totalLength = 0;
+		int isPrimeP = 0, isPrimeQ = 0, i, extraOctetAdded, numOctetsAdded = 0,  totalLength = 0, levelLength = 0;
 		int* pubKeyBuf = (int*)malloc(PUB_KEY_BUF_LEN* sizeof(int));
+		int* privKeyBuf = (int*)malloc(PRIV_KEY_BUF_LEN* sizeof(int));
+		int priv_key_ptr = PRIV_KEY_BUF_LEN - 1;
 		int pub_key_ptr = PUB_KEY_BUF_LEN - 1;
 		int len_e_octets = E_NUM_BITS / 8;
 		//initialising random values
 		mpz_init(p);
+		mpz_init(qinverseModP);
+		mpz_init(exponent1);
+		mpz_init(exponent2);
 		mpz_init(k);
 		mpz_init(m);
 		mpz_init(c);
@@ -299,7 +305,7 @@ int main()
 			appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, pubKeyBuf, &pub_key_ptr);
 			totalLength++;
 			
-			extraOctetAdded = addNToPublicKeyBuffer(n, pubKeyBuf, &pub_key_ptr);
+			extraOctetAdded = addMpz_tToBuffer(n, pubKeyBuf, &pub_key_ptr, N_NUM_BITS);
 			totalLength = totalLength + (N_NUM_BITS/8) + extraOctetAdded ;
 			
 			numOctetsAdded = appendLengthToBuffer( ( (N_NUM_BITS/8) + extraOctetAdded ) , pubKeyBuf, &pub_key_ptr);
@@ -323,14 +329,117 @@ int main()
 			
 			appendIdentifierOctet(TAG_BIT_STRING, PRIMITIVE, UNIVERSAL, pubKeyBuf, &pub_key_ptr);
 			totalLength++;
-		}
 		
 		addUsualPublicKeyHeaders(pubKeyBuf, &pub_key_ptr, &totalLength);
 		// The Key is contained within the pubKeyBuf at this stage
 		
+		writeKeyBuffer(pubKeyBuf, pub_key_ptr +1, PUB_KEY_BUF_LEN, 1);
 		
+		free(pubKeyBuf);
+		}
 		
 		//printf("Total octets %d", totalLength);
+		
+		{
+				totalLength = 0;
+				mpz_invert (qinverseModP, q, p);
+				
+				//Adding q^-1 mod p
+				extraOctetAdded = addMpz_tToBuffer(qinverseModP, privKeyBuf, &priv_key_ptr, RSA_NUM_BITS);
+				levelLength = (RSA_NUM_BITS/8) + extraOctetAdded ;
+				totalLength+= levelLength;
+				numOctetsAdded = appendLengthToBuffer(levelLength, privKeyBuf, &priv_key_ptr);
+				totalLength+=numOctetsAdded;
+				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				
+				mpz_mod(exponent1, d, decp);
+				mpz_mod(exponent2, d, decq);
+				
+				//Adding exponent2
+				extraOctetAdded = addMpz_tToBuffer(exponent2, privKeyBuf, &priv_key_ptr, RSA_NUM_BITS);
+				levelLength = (RSA_NUM_BITS/8) + extraOctetAdded ;
+				totalLength+= levelLength;
+				
+				numOctetsAdded = appendLengthToBuffer(levelLength, privKeyBuf, &priv_key_ptr);
+				totalLength+=numOctetsAdded;
+				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				
+				//Adding exponent1
+				extraOctetAdded = addMpz_tToBuffer(exponent1, privKeyBuf, &priv_key_ptr, RSA_NUM_BITS);
+				levelLength = (RSA_NUM_BITS/8) + extraOctetAdded ;
+				totalLength+= levelLength;
+				
+				numOctetsAdded = appendLengthToBuffer(levelLength, privKeyBuf, &priv_key_ptr);
+				totalLength+=numOctetsAdded;
+				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				
+				//Adding prime2
+				extraOctetAdded = addMpz_tToBuffer(q, privKeyBuf, &priv_key_ptr, RSA_NUM_BITS);
+				levelLength = (RSA_NUM_BITS/8) + extraOctetAdded ;
+				totalLength+= levelLength;
+				
+				numOctetsAdded = appendLengthToBuffer(levelLength, privKeyBuf, &priv_key_ptr);
+				totalLength+=numOctetsAdded;
+				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				
+				//Adding prime1
+				extraOctetAdded = addMpz_tToBuffer(p, privKeyBuf, &priv_key_ptr, RSA_NUM_BITS);
+				levelLength = (RSA_NUM_BITS/8) + extraOctetAdded ;
+				totalLength+= levelLength;
+				
+				numOctetsAdded = appendLengthToBuffer(levelLength, privKeyBuf, &priv_key_ptr);
+				totalLength+=numOctetsAdded;
+				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				
+				//Adding d
+				extraOctetAdded = addMpz_tToBuffer(d, privKeyBuf, &priv_key_ptr, N_NUM_BITS);
+				levelLength = (N_NUM_BITS/8) + extraOctetAdded ;
+				totalLength+= levelLength;
+				
+				numOctetsAdded = appendLengthToBuffer(levelLength, privKeyBuf, &priv_key_ptr);
+				totalLength+=numOctetsAdded;
+				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				
+				//Adding e
+				extraOctetAdded = addMpz_tToBuffer(e, privKeyBuf, &priv_key_ptr, E_NUM_BITS);
+				levelLength = (E_NUM_BITS/8) + extraOctetAdded ;
+				totalLength+= levelLength;
+				
+				numOctetsAdded = appendLengthToBuffer(levelLength, privKeyBuf, &priv_key_ptr);
+				totalLength+=numOctetsAdded;
+				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				
+				//Adding n
+				extraOctetAdded = addMpz_tToBuffer(n, privKeyBuf, &priv_key_ptr, N_NUM_BITS);
+				levelLength = (N_NUM_BITS/8) + extraOctetAdded ;
+				totalLength+= levelLength;
+				
+				numOctetsAdded = appendLengthToBuffer(levelLength, privKeyBuf, &priv_key_ptr);
+				totalLength+=numOctetsAdded;
+				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				
+				//Appending version
+				addNullOctet(privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				numOctetsAdded = appendLengthToBuffer(1, privKeyBuf, &priv_key_ptr);
+				totalLength+=numOctetsAdded;
+				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				totalLength++;
+				
+				numOctetsAdded = appendLengthToBuffer(totalLength, privKeyBuf, &priv_key_ptr);
+				appendIdentifierOctet(TAG_SEQUENCE, CONSTRUCTED, UNIVERSAL, privKeyBuf, &priv_key_ptr);
+				
+				writeKeyBuffer(privKeyBuf, priv_key_ptr +1, PRIV_KEY_BUF_LEN, 2);
+
+		}
 		
 		return 0;
 }
@@ -380,10 +489,12 @@ void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength)
 	appendIdentifierOctet(TAG_SEQUENCE, CONSTRUCTED, UNIVERSAL, pubKeyBuf, index);
 	*totalLength = *totalLength + 1;
 	
-	
 	//displayBuffer(pubKeyBuf, *(index) +1, PUB_KEY_BUF_LEN);
 	
-	writePublicKeyBuffer(pubKeyBuf, *(index) +1, PUB_KEY_BUF_LEN);
+
+
+	
+	
 }
 
 void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid)
@@ -421,10 +532,10 @@ void addNullOctet(int* buf, int* index)
 }
 
 //Returns if an extra octet has been added due to the value of n
-int addNToPublicKeyBuffer(mpz_t n, int* buf, int* index)
+int addMpz_tToBuffer(mpz_t n, int* buf, int* index, int numBits)
 {
 	int i, rem = 0;
-	for(i = 0 ; i <N_NUM_BITS ; i ++)
+	for(i = 0 ; i <numBits ; i ++)
 	{
 			rem = mpz_tstbit(n, i);
 			buf[*index] = rem;
@@ -493,7 +604,7 @@ void displayBuffer(int* buf, int index, int maxIndex)
 			printf("%d ", buf[i]);
 }
 
-void writePublicKeyBuffer(int *buf, int index, int maxIndex)
+void writeKeyBuffer(int *buf, int index, int maxIndex, int type)
 {
 		int i , len, j;
 		len = (maxIndex - index ) / 8;
@@ -512,7 +623,16 @@ void writePublicKeyBuffer(int *buf, int index, int maxIndex)
 				}
 				binaryKey[i] = ch;
 		}
-		FILE *fp;
-		fp=fopen("/home/avijit/projects/RSA/pub.der", "wb");
-		fwrite(binaryKey, sizeof(char), len, fp);
+		if(type==1)
+		{
+			FILE *fp;
+			fp=fopen("/home/avijit/projects/RSA/pub.der", "wb");
+			fwrite(binaryKey, sizeof(char), len, fp);
+		}
+		else
+		{
+			FILE *fp;
+			fp=fopen("/home/avijit/projects/RSA/priv.der", "wb");
+			fwrite(binaryKey, sizeof(char), len, fp);	
+		}
 }
