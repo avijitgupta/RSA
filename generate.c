@@ -4,11 +4,11 @@
 #include <time.h>
 #include <malloc.h>
 #include <string.h>
-#define N_NUM_BITS 64
-#define RSA_NUM_BITS 32
+#define N_NUM_BITS 1024
+#define RSA_NUM_BITS 512
 #define E_NUM_BITS 24
 #define DEBUG 0
-#define PUB_KEY_BUF_LEN 2048
+#define PUB_KEY_BUF_LEN 10000
 #define TAG_LEN 5
 #define CLASS_LEN 2
 #define TAG_INT 2
@@ -19,7 +19,7 @@
 #define TAG_BIT_STRING 3
 #define TAG_NULL 5
 #define TAG_OID 6
-#define PRIV_KEY_BUF_LEN 2048
+#define PRIV_KEY_BUF_LEN 10000
 void displayBuffer(int* buf, int index, int maxIndex);
 void appendIdentifierOctet(int tag, int type, int class, int* buf, int* index);
 int appendLengthToBuffer(int value, int* buf, int *index);
@@ -86,7 +86,7 @@ int applyExtendedEuclid(mpz_t e, mpz_t phi, mpz_t d)
 	mpz_init(a);
 	mpz_init(b);
 	mpz_init(c);
-		
+	mpz_init(mul);
 	mpz_init(tx);
 	mpz_init(ty);
 	mpz_init(tz);
@@ -129,6 +129,31 @@ int applyExtendedEuclid(mpz_t e, mpz_t phi, mpz_t d)
 		mpz_init_set(a, tx);
 		mpz_init_set(b, ty);
 		mpz_init_set(c, tz);
+		
+		
+		#if DEBUG
+			mpz_out_str(NULL, 10, div);
+			printf("\n");
+			
+			mpz_out_str(NULL, 10, mul);
+			printf("\n Sub:");
+			
+			mpz_out_str(NULL, 10, x);
+			printf("\n");
+			
+			mpz_out_str(NULL, 10, mul);
+			printf("\n");
+			
+			mpz_out_str(NULL, 10, y);
+			printf("\n");
+			
+			mpz_out_str(NULL, 10, a);
+			printf("\n");
+			mpz_out_str(NULL, 10, b);
+			printf("\n");
+			mpz_out_str(NULL, 10, c);
+			printf("\n\n");
+		#endif
 	}while(mpz_cmp_si(z, 0L)!=0);	
 	
 	//LCM not 1
@@ -202,7 +227,6 @@ int main()
 			do
 			{
 				mpz_urandomb(p, randomState ,RSA_NUM_BITS);
-				mpz_setbit(p, RSA_NUM_BITS - 1);
 				isPrimeP = mpz_probab_prime_p(p, 10);
 			}
 			while(!isPrimeP);
@@ -210,14 +234,15 @@ int main()
 			do
 			{
 				mpz_urandomb(q, randomState ,RSA_NUM_BITS);
-				mpz_setbit(q, RSA_NUM_BITS - 1);
 				isPrimeQ = mpz_probab_prime_p(q, 10);
 			}
 			while(!isPrimeQ);
 			
 			//p*q
 			mpz_mul(n , p , q);
-				
+			
+			//Assures that we have 1024 bit key
+			if(mpz_tstbit(n, N_NUM_BITS - 1) == 0) continue;
 			#if DEBUG
 				mpz_out_str(NULL, 10, p);
 				printf("\n");
@@ -243,12 +268,7 @@ int main()
 			
 			foundE = applyExtendedEuclid(e, phi, d);
 
-			/*while(!foundE)
-			{
-				mpz_urandomb(e, randomState ,E_NUM_BITS);
-				foundE = applyExtendedEuclid(e, phi, d);
-			}
-			*/
+			
 			#if DEBUG
 				mpz_out_str(NULL, 10, e);
 				printf("\n");
@@ -262,7 +282,7 @@ int main()
 			}
 		
 		}
-		#if DEBUG
+				#if DEBUG
 			printf("Positive D\n");
 			mpz_out_str(NULL, 10, d);
 			printf("\n");
@@ -293,7 +313,7 @@ int main()
 			//printf("dec 2\n");
 			//mpz_out_str(NULL, 10, res);
 		#endif
-		
+
 		//Adding E
 		{
 			addEToPublicKeyBuffer(e, pubKeyBuf, &pub_key_ptr);
@@ -426,7 +446,7 @@ int main()
 				appendIdentifierOctet(TAG_INT, PRIMITIVE, UNIVERSAL, privKeyBuf, &priv_key_ptr);
 				totalLength++;
 				
-				//Appending version
+				//Appending version - 0
 				addNullOctet(privKeyBuf, &priv_key_ptr);
 				totalLength++;
 				numOctetsAdded = appendLengthToBuffer(1, privKeyBuf, &priv_key_ptr);
@@ -555,10 +575,29 @@ int addMpz_tToBuffer(mpz_t n, int* buf, int* index, int numBits)
 }
 
 
+////returns number of octets added
+//int appendLengthToBuffer(int value, int* buf, int *index)
+//{
+		//int i;
+		////short length type
+		//if(value<=127)
+		//{
+			//for(i =  0 ; i < 8 ; i ++)
+			//{
+				//buf[*index] = value%2;
+				//value = value / 2;
+				//*index = *index - 1;
+			//}
+			//return 1;
+		//}
+//}
+
+
 //returns number of octets added
+
 int appendLengthToBuffer(int value, int* buf, int *index)
 {
-		int i;
+		int i, rem, octets = 0, temp;
 		//short length type
 		if(value<=127)
 		{
@@ -569,6 +608,35 @@ int appendLengthToBuffer(int value, int* buf, int *index)
 				*index = *index - 1;
 			}
 			return 1;
+		}
+		//long length type
+		else
+		{
+			while(value!=0)
+			{
+					rem = value % 256;
+					value = value / 256;
+					octets++;
+					for( i = 0 ; i < 8 ; i ++)
+					{
+						buf[*index] = rem%2;
+						rem = rem / 2;
+						*index = *index - 1;
+					}
+			}
+			
+			temp = octets;
+			for(i = 0 ; i < 7 ; i ++)
+			{
+				buf[*index] = temp%2;
+				temp/=2;
+				*index = *index - 1;
+			}
+			
+			buf[*index] = 1;
+			*index = *index - 1;
+			
+			return octets + 1;
 		}
 }
 
