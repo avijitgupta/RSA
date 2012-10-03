@@ -611,7 +611,7 @@ void OS2IP(mpz_t result, char* encodedMessage, int N)
 	mpz_set_str(temp, "1", 10);
 	for(i = N - 1 ; i >=0 ; i --)
 	{
-		int value = getOctetValue(encodedMessage[i]);
+		int value = encodedMessage[i];
 		mpz_mul_si(mul, temp, value);
 		mpz_add(result, result, mul);
 		mpz_mul_si(temp, temp, 256);
@@ -672,7 +672,7 @@ char getRandomOctet()
 					n =  n << 1 | rand()%2;
 			}
 		}
-		ch = findCharacter(n);
+		ch = (char)n;
 		return ch;
 }
 
@@ -680,7 +680,7 @@ char getRandomOctet()
 void addBlockTypeToBuffer(int BT, char* EM, int *index)
 {
 	char ch;
-	ch  = findCharacter(BT);
+	ch  = (char)BT;
 	EM[*index] = ch;
 	*index = *index  + 1;
 }
