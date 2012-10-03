@@ -7,20 +7,10 @@ int addMpz_tToBuffer(mpz_t n, int* buf, int* index, int numBits);
 void addNullOctet(int* buf, int* index);
 void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength);
 void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid);
-void writeKeyBuffer(int *buf, int index, int maxIndex, int type);
+void writeKeyBuffer(char* fileName, int *buf, int index, int maxIndex, int type);
 void writeSampleFile();
-void encodeBufferForEncryption(char * buf, char* encodedM, int k);
-void EMSA_PKCS_V1_5_ENCODE(char* M, char* EM, int emLen, int sizeM);
-void addBlockTypeToBuffer(int BT, char* EM, int *index);
-char getRandomOctet();
 char findCharacter(int n);
-void displayEncodedBuffer(char* ch, int N);
-void addPsuedoRandomOctets(int N, int * index, char* EM);
 void addEToPublicKeyBuffer(mpz_t e, int* pubKeyBuf, int* index);
-void OS2IP(mpz_t result, char* encodedMessage, int N);
-int getOctetValue(char ch);
-void I2OSP(char* enc, int N, mpz_t num);
-void writeEncryptedBuffer(char* buf, int N);
 const char* rsaEncryptionObjectIndentifierValue = "2A864886F70D010101";
 
 /*
@@ -45,24 +35,6 @@ avijit@avijit:~$ openssl asn1parse -strparse 17 -in 64pub.pem
  * */
 
 
-void encrypt(mpz_t m, mpz_t e, mpz_t c, mpz_t n)
-{
-		mpz_t res;
-		mpz_init(res);
-		mpz_init_set_si(res , 1L);
-		int i;
-		for(i = 0 ; i < N_NUM_BITS; i ++)
-		{
-				if(mpz_tstbit(e, i) == 1)
-				{
-					mpz_mul(res, res, m);
-					mpz_mod(res, res, n);
-				}
-				mpz_mul(m, m ,m); 
-				mpz_mod(m, m , n);
-		}
-		mpz_init_set(c, res);
-}
 
 
 int applyExtendedEuclid(mpz_t e, mpz_t phi, mpz_t d)
@@ -176,11 +148,11 @@ void addEToPublicKeyBuffer(mpz_t e, int* pubKeyBuf, int* index)
 }
 
 
-int main()
+int genrsa(char* priv_out, char* pub_out)
 {
 	/*TODO: How will the numbers chosen be of "similar bit length" ?
 	 */
-		mpz_t p, q, n, phi, decp, decq, e, d, c, m, t , m2, res, k, qinverseModP, exponent1, exponent2, integer_msg;
+		mpz_t p, q, n, phi, decp, decq, e, d, c, m, t , m2, res, k, qinverseModP, exponent1, exponent2;
 		gmp_randstate_t randomState;
 		int isPrimeP = 0, isPrimeQ = 0,  extraOctetAdded, numOctetsAdded = 0,  totalLength = 0, levelLength = 0;
 		int* pubKeyBuf = (int*)malloc(PUB_KEY_BUF_LEN* sizeof(int));
@@ -190,7 +162,7 @@ int main()
 		int len_e_octets = E_NUM_BITS / 8;
 		//initialising random values
 		mpz_init(p);
-		mpz_init(integer_msg);
+		
 		mpz_init(qinverseModP);
 		mpz_init(exponent1);
 		mpz_init(exponent2);
@@ -347,7 +319,7 @@ int main()
 		addUsualPublicKeyHeaders(pubKeyBuf, &pub_key_ptr, &totalLength);
 		// The Key is contained within the pubKeyBuf at this stage
 		
-		writeKeyBuffer(pubKeyBuf, pub_key_ptr +1, PUB_KEY_BUF_LEN, 1);
+		writeKeyBuffer(pub_out, pubKeyBuf, pub_key_ptr +1, PUB_KEY_BUF_LEN, 1);
 		
 		free(pubKeyBuf);
 		}
@@ -451,84 +423,14 @@ int main()
 				numOctetsAdded = appendLengthToBuffer(totalLength, privKeyBuf, &priv_key_ptr);
 				appendIdentifierOctet(TAG_SEQUENCE, CONSTRUCTED, UNIVERSAL, privKeyBuf, &priv_key_ptr);
 				
-				writeKeyBuffer(privKeyBuf, priv_key_ptr +1, PRIV_KEY_BUF_LEN, 2);
+				writeKeyBuffer(priv_out, privKeyBuf, priv_key_ptr +1, PRIV_KEY_BUF_LEN, 2);
+				free(privKeyBuf);
 
 		}
 		//writeSampleFile();
 		//free this somewhere
-		srand(time(0));
-		
-		char* msg = (char*)malloc(MSG_BUF_LEN* sizeof(char));
-		memset(msg, 0, MSG_BUF_LEN);
-		int num_octets = N_NUM_BITS/8;
-		char* encodedM  = (char*)malloc((num_octets-1)*sizeof(char)); 
-		memset(encodedM, 0, num_octets-1);
-		char* encrypted_buff = (char*)malloc(num_octets*sizeof(char));
-		memset(encrypted_buff, 0, num_octets);
-		//Handle error of long message
-		encodeBufferForEncryption(msg, encodedM, num_octets);
-		
-		//displayEncodedBuffer(encodedM, num_octets-1);
-		OS2IP(integer_msg, encodedM, num_octets-1);
-		mpz_out_str(NULL, 10, integer_msg);
-		encrypt(integer_msg, e, c, n);
-		I2OSP(encrypted_buff, num_octets, c);
-		writeEncryptedBuffer(encrypted_buff, num_octets);
-		
-	//	mpz_powm(res, m2 ,e, n);
-		
-		#if DEBUG
-			printf("Cipher1\n");
-			mpz_out_str(NULL, 10, c);
-			
-			//printf("Cipher2\n");
-			//mpz_out_str(NULL, 10, res);
-			
-			
-			printf("\n");
-		#endif
-	//	mpz_init_set(k, c);
-		
-	//	encrypt(c, d, t, n); 
-		
-	//	mpz_powm(res, k ,d, n);
-		#if DEBUG
-			printf("dec\n");
-			mpz_out_str(NULL, 10, t);
-			printf("\n");
-			//printf("dec 2\n");
-			//mpz_out_str(NULL, 10, res);
-		#endif
-		
-		
 		
 		return 0;
-}
-
-void writeEncryptedBuffer(char* buf, int N)
-{
-			FILE *fp;
-			fp=fopen("/home/avijit/projects/RSA/sampleEnc", "wb");
-			fwrite(buf, sizeof(char), N, fp);
-			fclose(fp);
-}
-
-
-void I2OSP(char* enc, int N, mpz_t num)
-{
-		int i;
-		mpz_t rem, base;
-		mpz_init(rem);
-		mpz_init(base);
-		mpz_init_set_si(base, 256L);
-		for(i = N - 1; i >=0 ; i --)
-		{
-				mpz_tdiv_qr(num, rem, num, base);
-				//mpz_out_str(NULL, 10, rem);
-				enc[i] = (char)mpz_get_ui(rem);
-				//printf(" %d ", enc[i]);
-				//mpz_tdiv_q_ui(num, num, 256);
-		}
 }
 
 void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength)
@@ -579,9 +481,6 @@ void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength)
 	//displayBuffer(pubKeyBuf, *(index) +1, PUB_KEY_BUF_LEN);
 	
 
-
-	
-	
 }
 
 void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid)
@@ -608,119 +507,7 @@ void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid)
 	}
 }
 
-void encodeBufferForEncryption(char * buf, char* encodedM, int k)
-{
-			
-			int fileLength = 0;
-			numOctets = k - 11;
-			FILE *fp;
-			fp=fopen("/home/avijit/projects/RSA/msg", "rb");
-			if(fp == NULL)
-			{
-					printf("File does not exist");
-					return;
-			}
-			fileLength = fread(buf, sizeof(char), MSG_BUF_LEN, fp);
-			//printf("FLEN %d", fileLength);
-			if(fileLength > numOctets)
-			{
-				printf("message too long\n");
-				fclose(fp);
-				return;
-			}
-			if(fileLength == 0)
-			{
-					printf("Error reading input Data");
-					fclose(fp);
-					return;
-			}
-			fclose(fp);
-			//free this somewhere
-			EMSA_PKCS_V1_5_ENCODE(buf, encodedM, k-1, fileLength);
-}
 
-void OS2IP(mpz_t result, char* encodedMessage, int N)
-{
-	int i = 0 ;
-	mpz_t temp, mul;
-	mpz_init(temp);
-	mpz_init(mul);
-	mpz_set_str(temp, "1", 10);
-	for(i = N - 1 ; i >=0 ; i --)
-	{
-		int value = (int)encodedMessage[i];
-		mpz_mul_si(mul, temp, value);
-		mpz_add(result, result, mul);
-		mpz_mul_si(temp, temp, 256);
-	}
-}
-
-int getOctetValue(char ch)
-{
-		if(ch>='0' && ch<='9')return ch - '0';
-		else return ch - 'A' + 10;
-}
-
-void EMSA_PKCS_V1_5_ENCODE(char* M, char* EM, int emLen, int sizeM)
-{
-		int index = 0, i;
-		int padLengthOctets;
-		addBlockTypeToBuffer(2, EM, &index);
-		padLengthOctets = emLen - sizeM - 2;
-		addPsuedoRandomOctets(padLengthOctets, &index, EM);
-		//Add null octet
-		EM[index] = 0;
-		index ++;
-		// add the message
-		
-		for(i = 0 ; i < sizeM ; i ++)
-		{
-			EM[index] = M[i];
-			index ++;
-		}
-		
-} 
-
-void displayEncodedBuffer(char* ch, int N)
-{
-		int i ;
-		for(i = 0 ; i < N ; i++)
-			printf("%c ", ch[i]);
-}
-
-void addPsuedoRandomOctets(int N, int * index, char* EM)
-{
-	int i;
-	for(i = 0 ; i < N ; i ++)
-	{
-			EM[*index] = getRandomOctet();
-			*index = *index + 1;
-	}
-}
-
-char getRandomOctet()
-{
-		int i, n=0;
-		char ch = 0 ;
-		while(n==0)
-		{
-			for(i  = 0 ; i < 8 ; i ++)
-			{
-					n =  n << 1 | rand()%2;
-			}
-		}
-		ch = (char)n;
-		return ch;
-}
-
-//adds octet representing type 
-void addBlockTypeToBuffer(int BT, char* EM, int *index)
-{
-	char ch;
-	ch  = (char)BT;
-	EM[*index] = ch;
-	*index = *index  + 1;
-}
 
 //returns hexadeciimal character
 char findCharacter(int n)
@@ -853,7 +640,7 @@ void writeSampleFile()
 		fwrite(arr, sizeof(char), N, fp);
 		fclose(fp);
 }
-void writeKeyBuffer(int *buf, int index, int maxIndex, int type)
+void writeKeyBuffer(char* fileName, int *buf, int index, int maxIndex, int type)
 {
 		int i , len, j;
 		len = (maxIndex - index ) / 8;
@@ -875,14 +662,14 @@ void writeKeyBuffer(int *buf, int index, int maxIndex, int type)
 		if(type==1)
 		{
 			FILE *fp;
-			fp=fopen("/home/avijit/projects/RSA/pub.der", "wb");
+			fp=fopen(fileName, "wb");
 			fwrite(binaryKey, sizeof(char), len, fp);
 			fclose(fp);
 		}
 		else
 		{
 			FILE *fp;
-			fp=fopen("/home/avijit/projects/RSA/priv.der", "wb");
+			fp=fopen(fileName, "wb");
 			fwrite(binaryKey, sizeof(char), len, fp);	
 			fclose(fp);
 		}

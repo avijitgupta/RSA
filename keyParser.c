@@ -1,29 +1,11 @@
 #include "rsahelper.h"
 
-//The ASN1 tree
-struct tree
-{
-		int class;
-		int primitive;
-		int tag;
-		long long length;
-		struct LLNode* children; // maintains the start pointer to children llinked list
-		char* content;
-	//	int contentLength;
-};
-
-struct LLNode
-{
-	struct tree* child;
-	struct LLNode* next;
-};
-
 void addNodeToLinkedList(struct tree* parent, struct tree* root);
 void nullify(struct tree* root);
 struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen);
-void parse(struct tree* root);
+void parse_display(struct tree* root);
 
-int main()
+struct tree* parse(char* keyfile)
 {
 			int fileLength = 0;
 			int* derIntArray;
@@ -31,11 +13,11 @@ int main()
 			unsigned char* derKey = (unsigned char*) malloc(KEY_BUF_LEN*sizeof(unsigned char));
 			
 			FILE *fp;
-			fp=fopen("/home/avijit/projects/RSA/pub.der", "rb");
+			fp=fopen(keyfile, "rb");
 			if(fp == NULL)
 			{
 					printf("File does not exist");
-					return 0;
+					return NULL;
 			}
 			fileLength = fread(derKey, sizeof(unsigned char), MSG_BUF_LEN, fp);
 			
@@ -52,8 +34,8 @@ int main()
 			
 			int start = 0;
 			struct tree* root = asn1parse(derIntArray, &start, count - 1, count);
-			parse(root);
-			return 0;			
+			//parse(root);
+			return root;			
 }
 
 //returns 1 if successful, 0 if parse failed
@@ -118,21 +100,21 @@ struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen)
 		{
 				//parse integer
 				int l = root->length * 8;
-				char* content = (char*) malloc(l * sizeof(char));
+				char* content = (char*) malloc((l+1) * sizeof(char));
 				for(i = 0 ; i < l ; i ++)
 				{
-					content[i] = buf[*start];
+					content[i] = buf[*start] + '0';
 					*start = *start + 1;
 				}
+				content[i]=0;
+				
 				root->content = content;
-				//root->contentLength = l;
 				return root;
 		}
 		else if(root->class == 0 && root->tag == TAG_NULL)
 		{
 				//parse null
 				root->content = NULL;
-				//root->contentLength = 0;
 				return root;
 		}
 		
@@ -185,14 +167,14 @@ void addNodeToLinkedList(struct tree* parent, struct tree* root)
 		return;
 }
 
-void parse(struct tree* root)
+void parse_display(struct tree* root)
 {
 		if(root == NULL)return;
 		printf("Class: %d Primitive: %d Tag: %d Length: %lld \n", root->class, root->primitive, root->tag, root->length);
 		struct LLNode* ptr = root->children;
 		while(ptr!=NULL)
 		{
-			parse(ptr->child);
+			parse_display(ptr->child);
 			ptr = ptr->next;
 		}
 }
