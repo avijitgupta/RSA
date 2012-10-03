@@ -617,7 +617,7 @@ void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid)
 void encodeBufferForEncryption(char * buf, char* encodedM, int k)
 {
 			
-			int fileLength, numOctets;
+			int fileLength = 0, numOctets;
 			numOctets = k - 11;
 			FILE *fp;
 			fp=fopen("/home/avijit/projects/RSA/msg", "rb");
@@ -627,10 +627,18 @@ void encodeBufferForEncryption(char * buf, char* encodedM, int k)
 					return;
 			}
 			fileLength = fread(buf, sizeof(char), MSG_BUF_LEN, fp);
+			//printf("FLEN %d", fileLength);
 			if(fileLength > numOctets)
 			{
 				printf("message too long\n");
+				fclose(fp);
 				return;
+			}
+			if(fileLength == 0)
+			{
+					printf("Error reading input Data");
+					fclose(fp);
+					return;
 			}
 			fclose(fp);
 			//free this somewhere
