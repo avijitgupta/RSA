@@ -1,9 +1,3 @@
-#include <gmp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <malloc.h>
-#include <string.h>
 #include "rsahelper.h"
 
 void displayBuffer(int* buf, int index, int maxIndex);
@@ -617,7 +611,7 @@ void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid)
 void encodeBufferForEncryption(char * buf, char* encodedM, int k)
 {
 			
-			int fileLength = 0, numOctets;
+			int fileLength = 0;
 			numOctets = k - 11;
 			FILE *fp;
 			fp=fopen("/home/avijit/projects/RSA/msg", "rb");
