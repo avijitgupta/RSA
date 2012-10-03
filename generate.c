@@ -463,11 +463,14 @@ int main()
 		//writeSampleFile();
 		//free this somewhere
 		srand(time(0));
+		
 		char* msg = (char*)malloc(MSG_BUF_LEN* sizeof(char));
+		memset(msg, 0, MSG_BUF_LEN);
 		int num_octets = N_NUM_BITS/8;
 		char* encodedM  = (char*)malloc((num_octets-1)*sizeof(char)); 
+		memset(encodedM, 0, num_octets-1);
 		char* encrypted_buff = (char*)malloc(num_octets*sizeof(char));
-		
+		memset(encrypted_buff, 0, num_octets);
 		//Handle error of long message
 		encodeBufferForEncryption(msg, encodedM, num_octets);
 		
@@ -643,7 +646,7 @@ void OS2IP(mpz_t result, char* encodedMessage, int N)
 	mpz_set_str(temp, "1", 10);
 	for(i = N - 1 ; i >=0 ; i --)
 	{
-		int value = encodedMessage[i];
+		int value = (int)encodedMessage[i];
 		mpz_mul_si(mul, temp, value);
 		mpz_add(result, result, mul);
 		mpz_mul_si(temp, temp, 256);
