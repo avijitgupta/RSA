@@ -25,7 +25,8 @@ void addPsuedoRandomOctets(int N, int * index, char* EM);
 void addEToPublicKeyBuffer(mpz_t e, int* pubKeyBuf, int* index);
 void OS2IP(mpz_t result, char* encodedMessage, int N);
 int getOctetValue(char ch);
-
+void I2OSP(char* enc, int N, mpz_t num);
+void writeEncryptedBuffer(char* buf, int N);
 const char* rsaEncryptionObjectIndentifierValue = "2A864886F70D010101";
 
 /*
@@ -465,16 +466,21 @@ int main()
 		char* msg = (char*)malloc(MSG_BUF_LEN* sizeof(char));
 		int num_octets = N_NUM_BITS/8;
 		char* encodedM  = (char*)malloc((num_octets-1)*sizeof(char)); 
+		char* encrypted_buff = (char*)malloc(num_octets*sizeof(char));
+		
+		//Handle error of long message
 		encodeBufferForEncryption(msg, encodedM, num_octets);
+		
 		//displayEncodedBuffer(encodedM, num_octets-1);
 		OS2IP(integer_msg, encodedM, num_octets-1);
 		mpz_out_str(NULL, 10, integer_msg);
-		
 		encrypt(integer_msg, e, c, n);
+		I2OSP(encrypted_buff, num_octets, c);
+		writeEncryptedBuffer(encrypted_buff, num_octets);
 		
 	//	mpz_powm(res, m2 ,e, n);
 		
-		//#if DEBUG
+		#if DEBUG
 			printf("Cipher1\n");
 			mpz_out_str(NULL, 10, c);
 			
@@ -483,23 +489,49 @@ int main()
 			
 			
 			printf("\n");
-	//	#endif
+		#endif
 	//	mpz_init_set(k, c);
 		
-		encrypt(c, d, t, n); 
+	//	encrypt(c, d, t, n); 
 		
 	//	mpz_powm(res, k ,d, n);
-	//	#if DEBUG
+		#if DEBUG
 			printf("dec\n");
 			mpz_out_str(NULL, 10, t);
 			printf("\n");
 			//printf("dec 2\n");
 			//mpz_out_str(NULL, 10, res);
-		//#endif
+		#endif
 		
 		
 		
 		return 0;
+}
+
+void writeEncryptedBuffer(char* buf, int N)
+{
+			FILE *fp;
+			fp=fopen("/home/avijit/projects/RSA/sampleEnc", "wb");
+			fwrite(buf, sizeof(char), N, fp);
+			fclose(fp);
+}
+
+
+void I2OSP(char* enc, int N, mpz_t num)
+{
+		int i;
+		mpz_t rem, base;
+		mpz_init(rem);
+		mpz_init(base);
+		mpz_init_set_si(base, 256L);
+		for(i = N - 1; i >=0 ; i --)
+		{
+				mpz_tdiv_qr(num, rem, num, base);
+				//mpz_out_str(NULL, 10, rem);
+				enc[i] = (char)mpz_get_ui(rem);
+				//printf(" %d ", enc[i]);
+				//mpz_tdiv_q_ui(num, num, 256);
+		}
 }
 
 void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength)
