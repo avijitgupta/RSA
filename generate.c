@@ -4,22 +4,8 @@
 #include <time.h>
 #include <malloc.h>
 #include <string.h>
-#define N_NUM_BITS 1024
-#define RSA_NUM_BITS 512
-#define E_NUM_BITS 24
-#define DEBUG 0
-#define PUB_KEY_BUF_LEN 10000
-#define TAG_LEN 5
-#define CLASS_LEN 2
-#define TAG_INT 2
-#define PRIMITIVE 0
-#define CONSTRUCTED 1
-#define UNIVERSAL 0
-#define TAG_SEQUENCE 16
-#define TAG_BIT_STRING 3
-#define TAG_NULL 5
-#define TAG_OID 6
-#define PRIV_KEY_BUF_LEN 10000
+#include "rsahelper.h"
+
 void displayBuffer(int* buf, int index, int maxIndex);
 void appendIdentifierOctet(int tag, int type, int class, int* buf, int* index);
 int appendLengthToBuffer(int value, int* buf, int *index);
@@ -28,8 +14,20 @@ void addNullOctet(int* buf, int* index);
 void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength);
 void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid);
 void writeKeyBuffer(int *buf, int index, int maxIndex, int type);
+void writeSampleFile();
+void encodeBufferForEncryption(char * buf, char* encodedM, int k);
+void EMSA_PKCS_V1_5_ENCODE(char* M, char* EM, int emLen, int sizeM);
+void addBlockTypeToBuffer(int BT, char* EM, int *index);
+char getRandomOctet();
+char findCharacter(int n);
+void displayEncodedBuffer(char* ch, int N);
+void addPsuedoRandomOctets(int N, int * index, char* EM);
+void addEToPublicKeyBuffer(mpz_t e, int* pubKeyBuf, int* index);
+void OS2IP(mpz_t result, char* encodedMessage, int N);
+int getOctetValue(char ch);
 
 const char* rsaEncryptionObjectIndentifierValue = "2A864886F70D010101";
+
 /*
  * 
 	Sample 64 bit certificate - public key
@@ -75,7 +73,7 @@ void encrypt(mpz_t m, mpz_t e, mpz_t c, mpz_t n)
 int applyExtendedEuclid(mpz_t e, mpz_t phi, mpz_t d)
 {
 	
-	mpz_t x, y, z, a, b, c, lcm, div, temp, mul, tx, ty, tz;
+	mpz_t x, y, z, a, b, c,  div, temp, mul, tx, ty, tz;
 	
 	if(mpz_even_p(e))	
 		return 0;
@@ -168,7 +166,7 @@ int applyExtendedEuclid(mpz_t e, mpz_t phi, mpz_t d)
 	}
 }
 
-int addEToPublicKeyBuffer(mpz_t e, int* pubKeyBuf, int* index)
+void addEToPublicKeyBuffer(mpz_t e, int* pubKeyBuf, int* index)
 {
 	int i;
 	for(i = 0 ; i <E_NUM_BITS; i++)
@@ -187,9 +185,9 @@ int main()
 {
 	/*TODO: How will the numbers chosen be of "similar bit length" ?
 	 */
-		mpz_t p, q, n, phi, decp, decq, e, d, c, m, t , m2, res, k, qinverseModP, exponent1, exponent2;
+		mpz_t p, q, n, phi, decp, decq, e, d, c, m, t , m2, res, k, qinverseModP, exponent1, exponent2, integer_msg;
 		gmp_randstate_t randomState;
-		int isPrimeP = 0, isPrimeQ = 0, i, extraOctetAdded, numOctetsAdded = 0,  totalLength = 0, levelLength = 0;
+		int isPrimeP = 0, isPrimeQ = 0,  extraOctetAdded, numOctetsAdded = 0,  totalLength = 0, levelLength = 0;
 		int* pubKeyBuf = (int*)malloc(PUB_KEY_BUF_LEN* sizeof(int));
 		int* privKeyBuf = (int*)malloc(PRIV_KEY_BUF_LEN* sizeof(int));
 		int priv_key_ptr = PRIV_KEY_BUF_LEN - 1;
@@ -197,6 +195,7 @@ int main()
 		int len_e_octets = E_NUM_BITS / 8;
 		//initialising random values
 		mpz_init(p);
+		mpz_init(integer_msg);
 		mpz_init(qinverseModP);
 		mpz_init(exponent1);
 		mpz_init(exponent2);
@@ -287,7 +286,7 @@ int main()
 			mpz_out_str(NULL, 10, d);
 			printf("\n");
 		#endif
-		encrypt(m, e, c, n);
+		//encrypt(m, e, c, n);
 		
 	//	mpz_powm(res, m2 ,e, n);
 		
@@ -303,7 +302,7 @@ int main()
 		#endif
 	//	mpz_init_set(k, c);
 		
-		encrypt(c, d, t, n); 
+		//encrypt(c, d, t, n); 
 		
 	//	mpz_powm(res, k ,d, n);
 		#if DEBUG
@@ -460,6 +459,45 @@ int main()
 				writeKeyBuffer(privKeyBuf, priv_key_ptr +1, PRIV_KEY_BUF_LEN, 2);
 
 		}
+		//writeSampleFile();
+		//free this somewhere
+		srand(time(0));
+		char* msg = (char*)malloc(MSG_BUF_LEN* sizeof(char));
+		int num_octets = N_NUM_BITS/8;
+		char* encodedM  = (char*)malloc((num_octets-1)*sizeof(char)); 
+		encodeBufferForEncryption(msg, encodedM, num_octets);
+		//displayEncodedBuffer(encodedM, num_octets-1);
+		OS2IP(integer_msg, encodedM, num_octets-1);
+		mpz_out_str(NULL, 10, integer_msg);
+		
+		encrypt(integer_msg, e, c, n);
+		
+	//	mpz_powm(res, m2 ,e, n);
+		
+		//#if DEBUG
+			printf("Cipher1\n");
+			mpz_out_str(NULL, 10, c);
+			
+			//printf("Cipher2\n");
+			//mpz_out_str(NULL, 10, res);
+			
+			
+			printf("\n");
+	//	#endif
+	//	mpz_init_set(k, c);
+		
+		encrypt(c, d, t, n); 
+		
+	//	mpz_powm(res, k ,d, n);
+	//	#if DEBUG
+			printf("dec\n");
+			mpz_out_str(NULL, 10, t);
+			printf("\n");
+			//printf("dec 2\n");
+			//mpz_out_str(NULL, 10, res);
+		//#endif
+		
+		
 		
 		return 0;
 }
@@ -541,6 +579,119 @@ void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid)
 	}
 }
 
+void encodeBufferForEncryption(char * buf, char* encodedM, int k)
+{
+			
+			int fileLength, numOctets;
+			numOctets = k - 11;
+			FILE *fp;
+			fp=fopen("/home/avijit/projects/RSA/msg", "rb");
+			if(fp == NULL)
+			{
+					printf("File does not exist");
+					return;
+			}
+			fileLength = fread(buf, sizeof(char), MSG_BUF_LEN, fp);
+			if(fileLength > numOctets)
+			{
+				printf("message too long\n");
+				return;
+			}
+			fclose(fp);
+			//free this somewhere
+			EMSA_PKCS_V1_5_ENCODE(buf, encodedM, k-1, fileLength);
+}
+
+void OS2IP(mpz_t result, char* encodedMessage, int N)
+{
+	int i = 0 ;
+	mpz_t temp, mul;
+	mpz_init(temp);
+	mpz_init(mul);
+	mpz_set_str(temp, "1", 10);
+	for(i = N - 1 ; i >=0 ; i --)
+	{
+		int value = getOctetValue(encodedMessage[i]);
+		mpz_mul_si(mul, temp, value);
+		mpz_add(result, result, mul);
+		mpz_mul_si(temp, temp, 256);
+	}
+}
+
+int getOctetValue(char ch)
+{
+		if(ch>='0' && ch<='9')return ch - '0';
+		else return ch - 'A' + 10;
+}
+
+void EMSA_PKCS_V1_5_ENCODE(char* M, char* EM, int emLen, int sizeM)
+{
+		int index = 0, i;
+		int padLengthOctets;
+		addBlockTypeToBuffer(2, EM, &index);
+		padLengthOctets = emLen - sizeM - 2;
+		addPsuedoRandomOctets(padLengthOctets, &index, EM);
+		//Add null octet
+		EM[index] = 0;
+		index ++;
+		// add the message
+		
+		for(i = 0 ; i < sizeM ; i ++)
+		{
+			EM[index] = M[i];
+			index ++;
+		}
+		
+} 
+
+void displayEncodedBuffer(char* ch, int N)
+{
+		int i ;
+		for(i = 0 ; i < N ; i++)
+			printf("%c ", ch[i]);
+}
+
+void addPsuedoRandomOctets(int N, int * index, char* EM)
+{
+	int i;
+	for(i = 0 ; i < N ; i ++)
+	{
+			EM[*index] = getRandomOctet();
+			*index = *index + 1;
+	}
+}
+
+char getRandomOctet()
+{
+		int i, n=0;
+		char ch = 0 ;
+		while(n==0)
+		{
+			for(i  = 0 ; i < 8 ; i ++)
+			{
+					n =  n << 1 | rand()%2;
+			}
+		}
+		ch = findCharacter(n);
+		return ch;
+}
+
+//adds octet representing type 
+void addBlockTypeToBuffer(int BT, char* EM, int *index)
+{
+	char ch;
+	ch  = findCharacter(BT);
+	EM[*index] = ch;
+	*index = *index  + 1;
+}
+
+//returns hexadeciimal character
+char findCharacter(int n)
+{
+		if(n <=9 ) return (char)('0'+n);
+		else return (char)('A' + n - 10);
+}
+
 void addNullOctet(int* buf, int* index)
 {
 	int i;
@@ -573,25 +724,6 @@ int addMpz_tToBuffer(mpz_t n, int* buf, int* index, int numBits)
 	}
 	return 0;
 }
-
-
-////returns number of octets added
-//int appendLengthToBuffer(int value, int* buf, int *index)
-//{
-		//int i;
-		////short length type
-		//if(value<=127)
-		//{
-			//for(i =  0 ; i < 8 ; i ++)
-			//{
-				//buf[*index] = value%2;
-				//value = value / 2;
-				//*index = *index - 1;
-			//}
-			//return 1;
-		//}
-//}
-
 
 //returns number of octets added
 
@@ -671,7 +803,19 @@ void displayBuffer(int* buf, int index, int maxIndex)
 		for(i = index; i < maxIndex; i ++)
 			printf("%d ", buf[i]);
 }
-
+void writeSampleFile()
+{
+		int N = 7, i;
+		char arr[N];
+		arr[0]='A';
+		arr[1]= 'B';
+		arr[2] = 'C';
+		for(i = 3 ; i < N ; i ++)arr[i] = 0;
+		FILE *fp;
+		fp=fopen("/home/avijit/projects/RSA/base.txt", "w");
+		fwrite(arr, sizeof(char), N, fp);
+		fclose(fp);
+}
 void writeKeyBuffer(int *buf, int index, int maxIndex, int type)
 {
 		int i , len, j;
@@ -696,11 +840,13 @@ void writeKeyBuffer(int *buf, int index, int maxIndex, int type)
 			FILE *fp;
 			fp=fopen("/home/avijit/projects/RSA/pub.der", "wb");
 			fwrite(binaryKey, sizeof(char), len, fp);
+			fclose(fp);
 		}
 		else
 		{
 			FILE *fp;
 			fp=fopen("/home/avijit/projects/RSA/priv.der", "wb");
 			fwrite(binaryKey, sizeof(char), len, fp);	
+			fclose(fp);
 		}
 }
