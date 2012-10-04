@@ -32,7 +32,6 @@ int decrypt(char* infile, char* outfile, char* key)
 		memset(decrypted_buff, 0, num_octets);
 		
 		OS2IP(integer_cipher, cipher, num_octets);
-		//mpz_out_str(NULL, 10, integer_cipher);
 		if(mpz_cmp(integer_cipher, n) >0)
 		{
 				printf("ciphertext representation out of range\n");
@@ -40,11 +39,8 @@ int decrypt(char* infile, char* outfile, char* key)
 		}
 		//decryption
 		_encrypt(integer_cipher, d, p, n);
-		//mpz_out_str(NULL, 10, d);
 		I2OSP(decrypted_buff, num_octets - 1, p);
 		writeDecryptedFile(outfile, decrypted_buff, num_octets - 1);
-//		for(i = 0 ; i < num_octets-1; i ++)
-//			printf("%c", decrypted_buff[i]);
 
 }
 
@@ -54,8 +50,6 @@ int extractFromPrivateKey(char* keyfile, mpz_t n, mpz_t d)
 		
 		if(root == NULL)
 			return 1;
-		//int n_octet_len = strlen(root->children->next->child->content) / 8;
-		//printf("%d %d", n_octet_len, cipherLength);
 		
 		mpz_set_str(n, root->children->next->child->content, 2);
 		mpz_set_str(d, root->children->next->next->next->child->content, 2);

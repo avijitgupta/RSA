@@ -122,7 +122,6 @@ int main (int argc, char **argv)
 			int ret = 0;
 			if(pubin)
 			{
-				//printf("Here");
 				ret = encrypt(file4, file3, file2, PUBLIC_KEY);
 			}
 			else if(privin)
