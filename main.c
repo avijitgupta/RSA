@@ -25,7 +25,8 @@ int main (int argc, char **argv)
 				{"genrsa", no_argument, 			0,  'g' },
 				{"privout",  required_argument, 	0,  'r' },
 				{"pubout",  required_argument, 		0,  'u' },
-				{"encrypt", no_argument,       		0,  'h' },
+				{"help",  required_argument, 		0,  'h' },
+				{"encrypt", no_argument,       		0,  'e' },
 				{"privin",    required_argument, 	0,  'i' },
 				{"out",  required_argument, 		0, 	'o'	},
 				{"decrypt", no_argument,       		0,  'd' },
@@ -109,6 +110,7 @@ int main (int argc, char **argv)
 						printf("Specify different names for private and public keys \n");
 				}
 		}
+		
 		//Encrytion supported with either private/public key
 		else if(encr == 1)
 		{
@@ -120,6 +122,7 @@ int main (int argc, char **argv)
 			int ret = 0;
 			if(pubin)
 			{
+				//printf("Here");
 				ret = encrypt(file4, file3, file2, PUBLIC_KEY);
 			}
 			else if(privin)

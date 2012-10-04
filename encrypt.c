@@ -22,8 +22,10 @@ int encrypt(char* infile, char* outfile, char* key, int keyType)
 		mpz_init(e);
 		mpz_init(c);
 		mpz_init(n);
+		
 		mpz_init(integer_msg);
 		int ret = extractFromKey(key, keyType, n, e);
+		mpz_out_str(NULL, 10, n);
 		if(ret == 1)
 		{
 				printf("Certificate not parsed properly\n");
@@ -46,54 +48,28 @@ int encrypt(char* infile, char* outfile, char* key, int keyType)
 		
 		//displayEncodedBuffer(encodedM, num_octets-1);
 		OS2IP(integer_msg, encodedM, num_octets-1);
-		mpz_out_str(NULL, 10, integer_msg);
+		//mpz_out_str(NULL, 10, integer_msg);
 		_encrypt(integer_msg, e, c, n);
 		I2OSP(encrypted_buff, num_octets, c);
 		writeEncryptedBuffer(outfile, encrypted_buff, num_octets);
 }
 
-int extractFromKey(char* keyfile, int keyType, mpz_t e, mpz_t n)
+int extractFromKey(char* keyfile, int keyType, mpz_t n, mpz_t e)
 {
 		struct tree* root = parse(keyfile);
+		parse_display(root);
 		if(root == NULL)
 			return;
 		int n_exists = 0, e_exists = 0;
 		if(keyType == PUBLIC_KEY)
 		{
 			//The extracted key is public key
-			if(root->children)
-			{
-					if(root->children->next)
-					{
-						if(root->children->next->child)
-						{
-								if(root->children->next->child->children)
-								{
-									if(root->children->next->child->children->child)
-									{
-										if(root->children->next->child->children->child->content)
-										{
-											mpz_set_str(n, root->children->next->child->children->child->content, 2);
-											n_exists = 1;
-										}
-									}
-									
-									if(root->children->next->child->children->next)
-									{	
-										if(root->children->next->child->children->next->child)
-										{
-											if(root->children->next->child->children->next->child->content)
-											{
-													mpz_set_str(e, root->children->next->child->children->next->child->content, 2);
-													e_exists = 1;
-											}
-										}
-									}
-									
-								}
-						}
-					}
-			}
+		//	printf("%s ", root->children->next->child->children->child->children->child->content); 
+			mpz_set_str(n, root->children->next->child->children->child->children->child->content, 2);
+								
+			//printf("%s ", root->children->next->child->children->child->children->next->child->content); 
+			mpz_set_str(e, root->children->next->child->children->child->children->next->child->content, 2);
+								
 		}
 		else
 		{
@@ -123,15 +99,7 @@ int extractFromKey(char* keyfile, int keyType, mpz_t e, mpz_t n)
 			}
 		}
 		
-		if(!e_exists || !n_exists)
-		{
-			//failure
-			return 1;
-		}
-		else
-		{
-			return 0;
-		}
+
 }
 
 

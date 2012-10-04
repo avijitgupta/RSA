@@ -3,7 +3,6 @@
 void addNodeToLinkedList(struct tree* parent, struct tree* root);
 void nullify(struct tree* root);
 struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen);
-void parse_display(struct tree* root);
 
 struct tree* parse(char* keyfile)
 {
@@ -34,7 +33,7 @@ struct tree* parse(char* keyfile)
 			
 			int start = 0;
 			struct tree* root = asn1parse(derIntArray, &start, count - 1, count);
-			//parse(root);
+			//parse_display(root);
 			return root;			
 }
 
@@ -109,20 +108,19 @@ struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen)
 				content[i]=0;
 				
 				root->content = content;
-				return root;
 		}
 		else if(root->class == 0 && root->tag == TAG_NULL)
 		{
 				//parse null
 				root->content = NULL;
-				return root;
 		}
 		
 		else if(root->class == 0 && (root->tag == TAG_BIT_STRING || root->tag == TAG_SEQUENCE) )
 		{
 				//parse Bit String
 				root->content = NULL;
-				while(*start <= maxIndex && *start < keyBufLen )
+				int max = *start + root->length * 8 - 1 ;
+				while(*start <= max && *start < keyBufLen )
 				{
 					struct tree* child;
 					if (root->tag == TAG_BIT_STRING)
@@ -130,7 +128,7 @@ struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen)
 						//Ignore the null octet
 						*start = *start + 8;
 					}
-					//printf("START %d\n", *start);
+					printf("parent len %lld start = %d end = %d \n", root->length, *start, max);
 					
 					child = asn1parse(buf, start, *start + root->length * 8 - 1, keyBufLen);
 					addNodeToLinkedList(root, child);
@@ -154,14 +152,21 @@ void addNodeToLinkedList(struct tree* parent, struct tree* root)
 		newNode->next = NULL;
 		if(ptr !=NULL)
 		{
+			printf("Adding %lld to existing LL of parent len = %lld passing", root->length, parent->length);
+			
+			printf("%lld ", ptr->child->length);
 			while(ptr->next!=NULL)
 			{
+				
+				printf("%lld ", ptr->next->child->length);
 				ptr = ptr->next;
 			}
 			ptr->next = newNode;
+			printf("\n");
 		}
 		else
 		{
+				printf("Started a new node %lld , a child to len = %lld \n", root->length, parent->length);
 				parent->children = newNode;
 		}
 		return;
@@ -170,12 +175,27 @@ void addNodeToLinkedList(struct tree* parent, struct tree* root)
 void parse_display(struct tree* root)
 {
 		if(root == NULL)return;
-		printf("Class: %d Primitive: %d Tag: %d Length: %lld \n", root->class, root->primitive, root->tag, root->length);
+		printf("Class: %d Primitive: %d Tag: %d Length: %lld ", root->class, root->primitive, root->tag, root->length);
+		if(root->content)
+			printf("Content Len: %d ", strlen(root->content));
+		printf("\n"); 
 		struct LLNode* ptr = root->children;
 		while(ptr!=NULL)
 		{
+			if(ptr)
+			{
+				if(ptr->next)
+				{
+					if(ptr->next->child)
+					{
+						printf("Next len %lld", ptr->next->child->length);
+					}	
+				}
+			}
+			
 			parse_display(ptr->child);
 			ptr = ptr->next;
+
 		}
 }
 

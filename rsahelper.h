@@ -49,6 +49,6 @@ struct LLNode
 extern int genrsa(char* priv_out, char* pub_out);
 extern int encrypt(char* infile, char* outfile, char* key, int keyType);
 extern struct tree* parse(char* keyfile);
-
+extern void parse_display(struct tree* root);
 
 
