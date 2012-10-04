@@ -128,7 +128,7 @@ struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen)
 						//Ignore the null octet
 						*start = *start + 8;
 					}
-					printf("parent len %lld start = %d end = %d \n", root->length, *start, max);
+					//printf("parent len %lld start = %d end = %d \n", root->length, *start, max);
 					
 					child = asn1parse(buf, start, *start + root->length * 8 - 1, keyBufLen);
 					addNodeToLinkedList(root, child);
@@ -152,21 +152,21 @@ void addNodeToLinkedList(struct tree* parent, struct tree* root)
 		newNode->next = NULL;
 		if(ptr !=NULL)
 		{
-			printf("Adding %lld to existing LL of parent len = %lld passing", root->length, parent->length);
+			//printf("Adding %lld to existing LL of parent len = %lld passing", root->length, parent->length);
 			
-			printf("%lld ", ptr->child->length);
+			//printf("%lld ", ptr->child->length);
 			while(ptr->next!=NULL)
 			{
 				
-				printf("%lld ", ptr->next->child->length);
+			//	printf("%lld ", ptr->next->child->length);
 				ptr = ptr->next;
 			}
 			ptr->next = newNode;
-			printf("\n");
+			//printf("\n");
 		}
 		else
 		{
-				printf("Started a new node %lld , a child to len = %lld \n", root->length, parent->length);
+			//	printf("Started a new node %lld , a child to len = %lld \n", root->length, parent->length);
 				parent->children = newNode;
 		}
 		return;

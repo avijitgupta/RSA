@@ -24,7 +24,7 @@ int encrypt(char* infile, char* outfile, char* key, int keyType)
 		mpz_init(integer_msg);
 		
 		int ret = extractFromKey(key, keyType, n, e);
-		mpz_out_str(NULL, 10, n);
+		//mpz_out_str(NULL, 10, n);
 		
 		if(ret == 1)
 		{
@@ -57,19 +57,34 @@ int encrypt(char* infile, char* outfile, char* key, int keyType)
 int extractFromKey(char* keyfile, int keyType, mpz_t n, mpz_t e)
 {
 		struct tree* root = parse(keyfile);
-		parse_display(root);
+		
 		if(root == NULL)
 			return;
 		int n_exists = 0, e_exists = 0;
 		if(keyType == PUBLIC_KEY)
 		{
-			//The extracted key is public key
-		//	printf("%s ", root->children->next->child->children->child->children->child->content); 
-			mpz_set_str(n, root->children->next->child->children->child->children->child->content, 2);
-								
-			//printf("%s ", root->children->next->child->children->child->children->next->child->content); 
-			mpz_set_str(e, root->children->next->child->children->child->children->next->child->content, 2);
-								
+			if(root->children)
+				if(root->children->next)
+					if(root->children->next->child)
+						if(root->children->next->child->children)
+							if(root->children->next->child->children->child)
+								if(root->children->next->child->children->child->children)
+								{
+									if(root->children->next->child->children->child->children->child)
+										if(root->children->next->child->children->child->children->child->content)
+										{
+												mpz_set_str(n, root->children->next->child->children->child->children->child->content, 2);
+												n_exists = 1;
+										}
+										
+									if(root->children->next->child->children->child->children->next)
+										if(root->children->next->child->children->child->children->next->child)
+											if(root->children->next->child->children->child->children->next->child->content)
+											{
+													mpz_set_str(e, root->children->next->child->children->child->children->next->child->content, 2);
+													e_exists = 1;
+											}
+								}
 		}
 		else
 		{
@@ -98,7 +113,10 @@ int extractFromKey(char* keyfile, int keyType, mpz_t n, mpz_t e)
 					}
 			}
 		}
-		
+
+		if(!e_exists || !n_exists)
+			return 1;
+		return 0;
 
 }
 
@@ -164,7 +182,7 @@ void OS2IP(mpz_t result, unsigned char* encodedMessage, int N)
 	for(i = N - 1 ; i >=0 ; i --)
 	{
 		int value = (int)encodedMessage[i];
-		printf("%d ", value);
+	//	printf("%d ", value);
 		mpz_mul_si(mul, temp, value);
 		mpz_add(result, result, mul);
 		mpz_mul_si(temp, temp, 256);

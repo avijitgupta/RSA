@@ -14,3 +14,6 @@ encrypt.o:   encrypt.c
 
 main.o:	     main.c
 	     gcc -c main.c -lgmp
+
+clean:	     
+	rm -f *.o
