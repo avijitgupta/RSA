@@ -48,7 +48,9 @@ struct LLNode
 
 extern int genrsa(char* priv_out, char* pub_out);
 extern int encrypt(char* infile, char* outfile, char* key, int keyType);
+extern int decrypt(char* infile, char* outfile, char* key);
 extern struct tree* parse(char* keyfile);
 extern void parse_display(struct tree* root);
-
-
+extern void _encrypt(mpz_t m, mpz_t e, mpz_t c, mpz_t n);
+extern void OS2IP(mpz_t result, unsigned char* encodedMessage, int N);
+extern void I2OSP(unsigned char* enc, int N, mpz_t num);

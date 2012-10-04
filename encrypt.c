@@ -12,7 +12,7 @@ void addPsuedoRandomOctets(int N, int * index, unsigned char* EM);
 void OS2IP(mpz_t result,unsigned char* encodedMessage, int N);
 void I2OSP(unsigned char* enc, int N, mpz_t num);
 void writeEncryptedBuffer(char* outfile, unsigned char* buf, int N);
-int extractFromKey(char* keyfile, int keyType, mpz_t e, mpz_t n);
+int extractFromKey(char* keyfile, int keyType, mpz_t n, mpz_t e);
 
 //encrypts a file named filename
 int encrypt(char* infile, char* outfile, char* key, int keyType)
@@ -59,7 +59,7 @@ int extractFromKey(char* keyfile, int keyType, mpz_t n, mpz_t e)
 		struct tree* root = parse(keyfile);
 		
 		if(root == NULL)
-			return;
+			return 1;
 		int n_exists = 0, e_exists = 0;
 		if(keyType == PUBLIC_KEY)
 		{

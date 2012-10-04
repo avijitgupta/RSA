@@ -31,7 +31,7 @@ int main (int argc, char **argv)
 				{"out",  required_argument, 		0, 	'o'	},
 				{"decrypt", no_argument,       		0,  'd' },
 				{"pubin",    required_argument, 	0,  'b' },
-				{"plaintext",    required_argument, 0,  'p' }
+				{"in",    required_argument,		0,  'I' }
 			};
 		
 			c = getopt_long_only(argc, argv, "", long_options, &option_index);
@@ -81,7 +81,7 @@ int main (int argc, char **argv)
 								else
 									displayOptions();
 								break;
-					case 'p': 	if(optarg)
+					case 'I': 	if(optarg)
 									strcpy(file4, optarg);
 								else
 									displayOptions();
@@ -129,6 +129,16 @@ int main (int argc, char **argv)
 			{
 				ret = encrypt(file4, file3, file1, PRIVATE_KEY);	
 			}
+			return ret;
+		}
+		else if(decr == 1)
+		{
+			if(!privin)
+			{
+					printf("Please provide private key to decrypt");
+			}
+			int ret = 0;
+			ret = decrypt(file4, file3, file1);
 			return ret;
 		}
 }
