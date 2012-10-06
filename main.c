@@ -8,7 +8,7 @@ void displayOptions()
 int main (int argc, char **argv)
 {
 		int c;
-		int generate = 0, encr = 0 , decr = 0, pubin = 0, privin = 0;
+		int generate = 0, encr = 0 , decr = 0, pubin = 0, privin = 0, parse =0, sign = 0;
 		char file1[LEN_FILE_NAME];
 		memset(file1, 0, LEN_FILE_NAME);
 		char file2[LEN_FILE_NAME];
@@ -31,7 +31,10 @@ int main (int argc, char **argv)
 				{"out",  required_argument, 		0, 	'o'	},
 				{"decrypt", no_argument,       		0,  'd' },
 				{"pubin",    required_argument, 	0,  'b' },
-				{"in",    required_argument,		0,  'I' }
+				{"in",    required_argument,		0,  'I' },
+				{"asn1parse", required_argument, 	0, 	'a'	},
+				{"sign", no_argument,				0,	's'	}
+				 
 			};
 		
 			c = getopt_long_only(argc, argv, "", long_options, &option_index);
@@ -86,12 +89,29 @@ int main (int argc, char **argv)
 								else
 									displayOptions();
 								break;
+					case 'a':	if(optarg)
+								{
+									strcpy(file4, optarg);
+									parse = 1;
+								}
+								else
+									displayOptions();
+								break;	
+					case 's':	sign = 1;
+								break;
 			}
 			
 			
 		}
 		
-		if(generate == 1)
+		
+		if(parse == 1)
+		{
+			parse_display(file4);
+			return 0;
+		}
+		
+		else if(generate == 1)
 		{
 				if(strcmp(file1, file2)!=0)
 				{
@@ -132,12 +152,24 @@ int main (int argc, char **argv)
 		}
 		else if(decr == 1)
 		{
-			if(!privin)
+			if( !(pubin ^ privin))
 			{
-					printf("Please provide private key to decrypt");
+				printf("Cannot specify more than one key, or no key files\n");
+				return 1;
 			}
 			int ret = 0;
-			ret = decrypt(file4, file3, file1);
+			if(pubin)
+			{
+				ret = decrypt(file4, file3, file2, PUBLIC_KEY);
+			}
+			else if(privin)
+			{
+				ret = decrypt(file4, file3, file1, PRIVATE_KEY);	
+			}
 			return ret;
+		}
+		else if (sign ==1)
+		{
+				generateSign(file4, file1, file3); 
 		}
 }

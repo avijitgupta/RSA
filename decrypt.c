@@ -1,8 +1,8 @@
 #include "rsahelper.h"
-int extractFromPrivateKey(char* keyfile, mpz_t n, mpz_t d);
 
+int extractInfoFromKey(char* keyfile, mpz_t n, mpz_t d, int keyType);
 //decrypts only using the private keyfile
-int decrypt(char* infile, char* outfile, char* key)
+int decrypt(char* infile, char* outfile, char* key, int keyType)
 {
 		mpz_t d, p, n, integer_cipher;
 		mpz_init(d);
@@ -15,7 +15,7 @@ int decrypt(char* infile, char* outfile, char* key)
 
 		int cipherLength = readFileInBuffer(infile, cipher);
 		
-		int ret = extractFromPrivateKey(key, n, d);
+		int ret = extractInfoFromKey(key, n, d, keyType);
 		if(ret == 1)
 		{
 			printf("Extraction Failed from Private Key\n");
@@ -44,15 +44,22 @@ int decrypt(char* infile, char* outfile, char* key)
 
 }
 
-int extractFromPrivateKey(char* keyfile, mpz_t n, mpz_t d)
+int extractInfoFromKey(char* keyfile, mpz_t n, mpz_t d, int keyType)
 {
 		struct tree* root = parse(keyfile);
 		
 		if(root == NULL)
 			return 1;
-		
-		mpz_set_str(n, root->children->next->child->content, 2);
-		mpz_set_str(d, root->children->next->next->next->child->content, 2);
+		if(keyType == PRIVATE_KEY)
+		{
+			mpz_set_str(n, root->children->next->child->content, 2);
+			mpz_set_str(d, root->children->next->next->next->child->content, 2);
+		}
+		if(keyType == PUBLIC_KEY)
+		{
+			mpz_set_str(n, root->children->next->child->children->child->children->child->content, 2);
+			mpz_set_str(d, root->children->next->child->children->child->children->next->child->content, 2);
+		}
 }
 
 int readFileInBuffer(char* fileName, unsigned char * buf)

@@ -3,19 +3,49 @@ int encodeBufferForEncryption(char* fileName, unsigned char * buf, unsigned char
 void _encrypt(mpz_t m, mpz_t e, mpz_t c, mpz_t n);
 void OS2IP(mpz_t result, unsigned char* encodedMessage, int N);
 int getOctetValue(char ch);
-void EMSA_PKCS_V1_5_ENCODE(unsigned char* M, unsigned char* EM, int emLen, int sizeM);
-void addPsuedoRandomOctets(int N, int * index, unsigned char* EM);
-unsigned char getRandomOctet();
+void EMSA_PKCS_V1_5_ENCODE(unsigned char* M, unsigned char* EM, int emLen, int sizeM, int BT);
+unsigned char getRandomOctet(int BT);
 void addBlockTypeToBuffer(int BT, unsigned char* EM, int *index);
 void displayEncodedBuffer(unsigned char* ch, int N);
-void addPsuedoRandomOctets(int N, int * index, unsigned char* EM);
+void addPsuedoRandomOctets(int N, int * index, unsigned char* EM, int BT);
 void OS2IP(mpz_t result,unsigned char* encodedMessage, int N);
 void I2OSP(unsigned char* enc, int N, mpz_t num);
 void writeEncryptedBuffer(char* outfile, unsigned char* buf, int N);
 int extractFromKey(char* keyfile, int keyType, mpz_t n, mpz_t e);
 
+void encrypt_buff(char* plain_buf, char* out_buf, char* keyfile, int keyType, int plain_buf_size, int* size_encrypted)
+{
+		mpz_t e, c, n, integer_msg;
+		mpz_init(e);
+		mpz_init(c);
+		mpz_init(n);
+		mpz_init(integer_msg);
+
+		int ret = extractFromKey(keyfile, keyType, n, e);
+		if(ret == 1)
+		{
+				printf("Certificate not parsed properly\n");
+				return ;
+		}
+		//mpz_out_str(NULL, 10, n);
+		//printf("\n");
+		//mpz_out_str(NULL, 10, e);
+		//srand(time(0));
+		ret = 0;
+		int num_octets = N_NUM_BITS/8;
+		
+		unsigned char* encodedM  = (unsigned char*)malloc((num_octets-1)*sizeof(unsigned char)); 
+		memset(encodedM, 0, num_octets-1);
+		EMSA_PKCS_V1_5_ENCODE(plain_buf, encodedM, num_octets-1, plain_buf_size, 1);
+		
+		OS2IP(integer_msg, encodedM, num_octets-1);
+		_encrypt(integer_msg, e, c, n);
+		I2OSP(out_buf, num_octets, c);
+		*size_encrypted = num_octets;
+} 
+
 //encrypts a file named filename
-int encrypt(char* infile, char* outfile, char* key, int keyType)
+int encrypt(char* infile, char* outfile, char* keyfile, int keyType)
 {
 		mpz_t e, c, n, integer_msg;
 		mpz_init(e);
@@ -23,7 +53,7 @@ int encrypt(char* infile, char* outfile, char* key, int keyType)
 		mpz_init(n);
 		mpz_init(integer_msg);
 		
-		int ret = extractFromKey(key, keyType, n, e);
+		int ret = extractFromKey(keyfile, keyType, n, e);
 		//mpz_out_str(NULL, 10, n);
 		
 		if(ret == 1)
@@ -46,9 +76,7 @@ int encrypt(char* infile, char* outfile, char* key, int keyType)
 		ret = encodeBufferForEncryption(infile, msg, encodedM, num_octets);
 		if(ret == 1) return 1;
 		
-		//displayEncodedBuffer(encodedM, num_octets-1);
 		OS2IP(integer_msg, encodedM, num_octets-1);
-		//mpz_out_str(NULL, 10, integer_msg);
 		_encrypt(integer_msg, e, c, n);
 		I2OSP(encrypted_buff, num_octets, c);
 		writeEncryptedBuffer(outfile, encrypted_buff, num_octets);
@@ -101,12 +129,16 @@ int extractFromKey(char* keyfile, int keyType, mpz_t n, mpz_t e)
 						
 						if(root->children->next->next)
 						{
-							if(root->children->next->next->child)
+							if(root->children->next->next->next)
 							{
-								if(root->children->next->next->child->content)
+								if(root->children->next->next->next->child)
 								{
-											mpz_set_str(e, root->children->next->next->child->content, 2);
-											e_exists = 1;	
+									if(root->children->next->next->next->child->content)
+									{
+												//we take d from the private key, instead of e and encrypt stuff
+												mpz_set_str(e, root->children->next->next->next->child->content, 2);
+												e_exists = 1;
+									}
 								}
 							}
 						}
@@ -167,7 +199,7 @@ int encodeBufferForEncryption(char* fileName, unsigned char * buf, unsigned char
 			}
 			fclose(fp);
 			//free this somewhere
-			EMSA_PKCS_V1_5_ENCODE(buf, encodedM, k-1, fileLength);
+			EMSA_PKCS_V1_5_ENCODE(buf, encodedM, k-1, fileLength, 2);
 			return 0;
 }
 
@@ -195,13 +227,13 @@ int getOctetValue(char ch)
 		else return ch - 'A' + 10;
 }
 
-void EMSA_PKCS_V1_5_ENCODE(unsigned char* M, unsigned char* EM, int emLen, int sizeM)
+void EMSA_PKCS_V1_5_ENCODE(unsigned char* M, unsigned char* EM, int emLen, int sizeM, int BT)
 {
 		int index = 0, i;
 		int padLengthOctets;
-		addBlockTypeToBuffer(2, EM, &index);
+		addBlockTypeToBuffer(BT, EM, &index);
 		padLengthOctets = emLen - sizeM - 2;
-		addPsuedoRandomOctets(padLengthOctets, &index, EM);
+		addPsuedoRandomOctets(padLengthOctets, &index, EM, BT);
 		//Add null octet
 		EM[index] = 0;
 		index ++;
@@ -222,18 +254,20 @@ void displayEncodedBuffer(unsigned char* ch, int N)
 			printf("%c ", ch[i]);
 }
 
-void addPsuedoRandomOctets(int N, int * index, unsigned char* EM)
+void addPsuedoRandomOctets(int N, int * index, unsigned char* EM, int BT)
 {
 	int i;
 	for(i = 0 ; i < N ; i ++)
 	{
-			EM[*index] = getRandomOctet();
+			EM[*index] = getRandomOctet(BT);
 			*index = *index + 1;
 	}
 }
 
-unsigned char getRandomOctet()
+unsigned char getRandomOctet(int BT)
 {
+		if(BT==1)
+			return 0xFF;
 		int i, n=0;
 		unsigned char ch = 0 ;
 		while(n==0)

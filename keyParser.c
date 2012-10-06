@@ -3,6 +3,14 @@
 void addNodeToLinkedList(struct tree* parent, struct tree* root);
 void nullify(struct tree* root);
 struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen);
+void _parse_display(struct tree* root);
+
+void parse_display(char* keyfile)
+{
+	struct tree* root = parse(keyfile);
+	_parse_display(root);
+	return;
+}
 
 struct tree* parse(char* keyfile)
 {
@@ -15,7 +23,7 @@ struct tree* parse(char* keyfile)
 			fp=fopen(keyfile, "rb");
 			if(fp == NULL)
 			{
-					printf("File does not exist");
+					printf("File does not exist \n");
 					return NULL;
 			}
 			fileLength = fread(derKey, sizeof(unsigned char), MSG_BUF_LEN, fp);
@@ -58,6 +66,7 @@ struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen)
 		return NULL;	
 	}
 	
+	
 		//parse the identifier octet
 		root->class = (buf[*start]<<1) + (buf[*start + 1]);
 		root->primitive = buf[*start+2];
@@ -92,12 +101,26 @@ struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen)
 			}
 			root->length = len;
 		}
-		//You are currently pointing on the first content octet
 		
+		
+		//Extra options of the certificate are generally not filled in - break.. since we have parsed everythign else
+		if(*start + root->length > keyBufLen)
+			return NULL;
+		//You are currently pointing on the first content octet
+
 		//Leaves
-		if(root->class == 0 && (root->tag == TAG_INT || root->tag == TAG_OID) )
+		if(         
+					(root->class == 0 && (root->tag == TAG_INT || root->tag == TAG_OID ||
+										root->tag == TAG_SET || root->tag == TAG_PRINTABLE_STRING ||
+										root->tag == TAG_UTF8_STRING || root->tag == TAG_IA5_STRING ||
+										root->tag == TAG_UTC_TIME || root->tag == TAG_OCTET_STRING ) 
+					) 
+					||
+					(root->class == 2 && root->primitive == 1 && root->tag == 0)	 //Explicit wrapper that wraps the certificate version							
+		  )
+		
 		{
-				//parse integer
+				//parse stuff
 				int l = root->length * 8;
 				char* content = (char*) malloc((l+1) * sizeof(char));
 				for(i = 0 ; i < l ; i ++)
@@ -172,7 +195,7 @@ void addNodeToLinkedList(struct tree* parent, struct tree* root)
 		return;
 }
 
-void parse_display(struct tree* root)
+void _parse_display(struct tree* root)
 {
 		if(root == NULL)return;
 		printf("Class: %d Primitive: %d Tag: %d Length: %lld ", root->class, root->primitive, root->tag, root->length);
@@ -182,7 +205,7 @@ void parse_display(struct tree* root)
 		struct LLNode* ptr = root->children;
 		while(ptr!=NULL)
 		{
-			if(ptr)
+			/*if(ptr)
 			{
 				if(ptr->next)
 				{
@@ -192,8 +215,8 @@ void parse_display(struct tree* root)
 					}	
 				}
 			}
-			
-			parse_display(ptr->child);
+			*/
+			_parse_display(ptr->child);
 			ptr = ptr->next;
 
 		}

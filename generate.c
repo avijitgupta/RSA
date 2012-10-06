@@ -7,12 +7,11 @@ int addMpz_tToBuffer(mpz_t n, int* buf, int* index, int numBits);
 void addNullOctet(int* buf, int* index);
 void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength);
 void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid);
-void writeKeyBuffer(char* fileName, int *buf, int index, int maxIndex, int type);
+void writeKeyBuffer(char* fileName, int *buf, int index, int maxIndex);
 void writeSampleFile();
 char findCharacter(int n);
 void addEToPublicKeyBuffer(mpz_t e, int* pubKeyBuf, int* index);
 const char* rsaEncryptionObjectIndentifierValue = "2A864886F70D010101";
-
 /*
  * 
 	Sample 64 bit certificate - public key
@@ -319,7 +318,7 @@ int genrsa(char* priv_out, char* pub_out)
 		addUsualPublicKeyHeaders(pubKeyBuf, &pub_key_ptr, &totalLength);
 		// The Key is contained within the pubKeyBuf at this stage
 		
-		writeKeyBuffer(pub_out, pubKeyBuf, pub_key_ptr +1, PUB_KEY_BUF_LEN, 1);
+		writeKeyBuffer(pub_out, pubKeyBuf, pub_key_ptr +1, PUB_KEY_BUF_LEN);
 		
 		free(pubKeyBuf);
 		}
@@ -423,7 +422,7 @@ int genrsa(char* priv_out, char* pub_out)
 				numOctetsAdded = appendLengthToBuffer(totalLength, privKeyBuf, &priv_key_ptr);
 				appendIdentifierOctet(TAG_SEQUENCE, CONSTRUCTED, UNIVERSAL, privKeyBuf, &priv_key_ptr);
 				
-				writeKeyBuffer(priv_out, privKeyBuf, priv_key_ptr +1, PRIV_KEY_BUF_LEN, 2);
+				writeKeyBuffer(priv_out, privKeyBuf, priv_key_ptr +1, PRIV_KEY_BUF_LEN);
 				free(privKeyBuf);
 
 		}
@@ -450,7 +449,7 @@ void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength)
 	
 	//printf("Total octets 3 %d", *totalLength);
 	//This adds 9 octets
-	addRsaEncryptionOID(pubKeyBuf, index, rsaEncryptionObjectIndentifierValue);
+	addOID(pubKeyBuf, index, rsaEncryptionObjectIndentifierValue);
 	//One octet for 2 hex characters
 	*totalLength = *(totalLength) + protoLen;
 	lengthUsualHeader = lengthUsualHeader + protoLen;
@@ -483,7 +482,7 @@ void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength)
 
 }
 
-void addRsaEncryptionOID(int *pubKeyBuf, int* index, const char* oid)
+void addOID(int *pubKeyBuf, int* index, const char* oid)
 {
 	int N = strlen(oid);
 	int i, temp, j;
@@ -623,9 +622,16 @@ void appendIdentifierOctet(int tag, int type, int class, int* buf, int* index)
 
 void displayBuffer(int* buf, int index, int maxIndex)
 {
-		int i =0 ; 
-		for(i = index; i < maxIndex; i ++)
-			printf("%d ", buf[i]);
+		int i =0, j ; 
+		for(i = index; i < maxIndex; )
+		{	
+			for(j = 0 ; j < 8 ; j ++)
+			{
+				printf("%d ", buf[i]);
+				i++;
+			}
+			printf("\n");
+		}
 }
 void writeSampleFile()
 {
@@ -640,7 +646,7 @@ void writeSampleFile()
 		fwrite(arr, sizeof(char), N, fp);
 		fclose(fp);
 }
-void writeKeyBuffer(char* fileName, int *buf, int index, int maxIndex, int type)
+void writeKeyBuffer(char* fileName, int *buf, int index, int maxIndex)
 {
 		int i , len, j;
 		len = (maxIndex - index ) / 8;
@@ -659,18 +665,10 @@ void writeKeyBuffer(char* fileName, int *buf, int index, int maxIndex, int type)
 				}
 				binaryKey[i] = ch;
 		}
-		if(type==1)
-		{
+		
 			FILE *fp;
 			fp=fopen(fileName, "wb");
 			fwrite(binaryKey, sizeof(char), len, fp);
 			fclose(fp);
-		}
-		else
-		{
-			FILE *fp;
-			fp=fopen(fileName, "wb");
-			fwrite(binaryKey, sizeof(char), len, fp);	
-			fclose(fp);
-		}
+		
 }
