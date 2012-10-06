@@ -2,7 +2,8 @@
 
 int extractInfoFromKey(char* keyfile, mpz_t n, mpz_t d, int keyType);
 //decrypts only using the private keyfile
-int decrypt(char* infile, char* outfile, char* key, int keyType)
+
+int decrypt(char* infile, char* outfile, char* key, int keyType, unsigned char* plain_buff, int* size_decrypt_buff)
 {
 		mpz_t d, p, n, integer_cipher;
 		mpz_init(d);
@@ -40,9 +41,52 @@ int decrypt(char* infile, char* outfile, char* key, int keyType)
 		//decryption
 		_encrypt(integer_cipher, d, p, n);
 		I2OSP(decrypted_buff, num_octets - 1, p);
-		writeDecryptedFile(outfile, decrypted_buff, num_octets - 1);
-
+		
+		int ret1 = 0, ret2 = 0 ;
+		if(outfile!=NULL)
+		{
+				ret1 = writeDecryptedFile(outfile, decrypted_buff, num_octets - 1);
+		}
+		if(plain_buff!=NULL)
+		{
+				ret2 = getDecryptedBuffer(plain_buff, decrypted_buff, num_octets - 1, size_decrypt_buff);
+		}
+		return ret1 || ret2;
 }
+
+int getDecryptedBuffer(unsigned char* plain_buff, unsigned char* decrypted_buff, int N, int* dec_size)
+{
+		char * ptr = decrypted_buff;
+		int padLen = 0;
+		int size = N;
+		int i = 0;
+		while(*ptr && padLen < N)
+		{
+			padLen++;
+			ptr++;
+			size --;
+		}
+		if(padLen <10)
+		{
+			printf("decoding error\n");
+			return 1;
+		}
+		if(*ptr == 0)
+		{
+			//The first plaintext alphabet after null octet
+			ptr++;
+			//removing null octet from size
+			size --;
+			for( i = 0 ; i < size; i ++)
+			{
+					plain_buff[i] = ptr[i];
+			}
+			*dec_size = size;
+			return 0;
+		}
+		return 1;
+}
+
 
 int extractInfoFromKey(char* keyfile, mpz_t n, mpz_t d, int keyType)
 {

@@ -12,6 +12,24 @@ void parse_display(char* keyfile)
 	return;
 }
 
+struct tree* parseFromBuff(unsigned char* buf, int N)
+{
+	int* derIntArray;
+	int i, j, count = 0;
+	derIntArray = (int*) malloc(N * 8 * sizeof(int));
+	for(i = 0 ; i < N; i ++)
+	{
+			for(j = 7 ; j >=0 ; j --)
+			{
+				derIntArray[count] = buf[i] & (1<<j) ? 1: 0;
+				count++; 
+			}
+	}
+	int start = 0;
+	struct tree* root = asn1parse(derIntArray, &start, count - 1, count);
+	return root;
+}
+
 struct tree* parse(char* keyfile)
 {
 			int fileLength = 0;

@@ -13,7 +13,7 @@ void I2OSP(unsigned char* enc, int N, mpz_t num);
 void writeEncryptedBuffer(char* outfile, unsigned char* buf, int N);
 int extractFromKey(char* keyfile, int keyType, mpz_t n, mpz_t e);
 
-void encrypt_buff(char* plain_buf, char* out_buf, char* keyfile, int keyType, int plain_buf_size, int* size_encrypted)
+void encrypt_buff(unsigned char* plain_buf, unsigned char* out_buf, char* keyfile, int keyType, int plain_buf_size, int* size_encrypted)
 {
 		mpz_t e, c, n, integer_msg;
 		mpz_init(e);
@@ -27,10 +27,7 @@ void encrypt_buff(char* plain_buf, char* out_buf, char* keyfile, int keyType, in
 				printf("Certificate not parsed properly\n");
 				return ;
 		}
-		//mpz_out_str(NULL, 10, n);
-		//printf("\n");
-		//mpz_out_str(NULL, 10, e);
-		//srand(time(0));
+
 		ret = 0;
 		int num_octets = N_NUM_BITS/8;
 		

@@ -100,7 +100,7 @@ int generateSign(char* inputFile, char* privKeyFile, char* signedFile)
 		encrypt_buff(octet_string, encrypted_buff, privKeyFile, PRIVATE_KEY, octet_string_len, &size_encrypted);
 		writeEncryptedBuffer(signedFile, encrypted_buff, size_encrypted);
 	
-		decrypt(signedFile, "decr", "pub.der", PUBLIC_KEY);
+		//decrypt(signedFile, "decr", "pub.der", PUBLIC_KEY);
 		//writeKeyBuffer(signedFile, encoded_buf, index+1, MSG_BUF_LEN);
 }
 

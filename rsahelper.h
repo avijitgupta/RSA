@@ -60,7 +60,7 @@ struct LLNode
 
 extern int genrsa(char* priv_out, char* pub_out);
 extern int encrypt(char* infile, char* outfile, char* key, int keyType);
-extern int decrypt(char* infile, char* outfile, char* key, int keyType);
+int decrypt(char* infile, char* outfile, char* key, int keyType, unsigned char* plain_buff, int* size_decrypt_buff);
 extern struct tree* parse(char* keyfile);
 extern void parse_display(char* keyfile);
 extern void _encrypt(mpz_t m, mpz_t e, mpz_t c, mpz_t n);
@@ -70,5 +70,8 @@ extern int readFileInBuffer(char* fileName, unsigned char * buf);
 extern int generateSign(char* inputFile, char* privKeyFile, char* signedFile);
 extern int appendLengthToBuffer(int value, int* buf, int *index);
 extern void addOID(int *buf, int* index, const char* oid);
-extern void encrypt_buff(char* plain_buf, char* out_buf, char* keyfile, int keyType, int plain_buf_size, int* size_encrypted);
+extern void encrypt_buff(unsigned char* plain_buf, unsigned char* out_buf, char* keyfile, int keyType, int plain_buf_size, int* size_encrypted);
 extern void writeEncryptedBuffer(char* outfile, unsigned char* buf, int N);
+extern struct tree* parseFromBuff(unsigned char* buf, int N);
+extern int verify(char* signedFile, char* originalFile, char* pubKeyPath);
+extern void _parse_display(struct tree* root);

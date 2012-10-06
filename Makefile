@@ -1,7 +1,7 @@
 all: rsaengine
 
-rsaengine: main.o encrypt.o sign.o keyParser.o generate.o decrypt.o
-	   gcc main.o encrypt.o sign.o keyParser.o generate.o decrypt.o -o rsaengine -lgmp -lssl -lcrypto
+rsaengine: main.o encrypt.o verify.o sign.o keyParser.o generate.o decrypt.o
+	   gcc main.o encrypt.o verify.o sign.o keyParser.o generate.o decrypt.o -o rsaengine -lgmp -lssl -lcrypto
 
 generate.o: generate.c
 	    gcc -c generate.c -lgmp
@@ -20,6 +20,10 @@ decrypt.o:   decrypt.c
 
 sign.o:	     sign.c
 	     gcc -c sign.c -lgmp -lssl -lcrypto
+
+verify.o:    verify.c
+	     gcc -c verify.c -lgmp -lssl -lcrypto
+
 
 clean:	     
 	rm -f *.o

@@ -8,7 +8,7 @@ void displayOptions()
 int main (int argc, char **argv)
 {
 		int c;
-		int generate = 0, encr = 0 , decr = 0, pubin = 0, privin = 0, parse =0, sign = 0;
+		int generate = 0, encr = 0 , decr = 0, pubin = 0, privin = 0, parse =0, sign = 0, verifyData = 0;
 		char file1[LEN_FILE_NAME];
 		memset(file1, 0, LEN_FILE_NAME);
 		char file2[LEN_FILE_NAME];
@@ -33,8 +33,9 @@ int main (int argc, char **argv)
 				{"pubin",    required_argument, 	0,  'b' },
 				{"in",    required_argument,		0,  'I' },
 				{"asn1parse", required_argument, 	0, 	'a'	},
-				{"sign", no_argument,				0,	's'	}
-				 
+				{"sign", no_argument,				0,	's'	},
+				{"verify", no_argument,				0,	'v'	},
+				{"message", required_argument, 		0, 	'm'}			 
 			};
 		
 			c = getopt_long_only(argc, argv, "", long_options, &option_index);
@@ -99,6 +100,12 @@ int main (int argc, char **argv)
 								break;	
 					case 's':	sign = 1;
 								break;
+					case 'v':	verifyData = 1;
+								break;
+					case 'm':	if(optarg)
+									strcpy(file1, optarg);
+								else
+									displayOptions();
 			}
 			
 			
@@ -160,16 +167,20 @@ int main (int argc, char **argv)
 			int ret = 0;
 			if(pubin)
 			{
-				ret = decrypt(file4, file3, file2, PUBLIC_KEY);
+				ret = decrypt(file4, file3, file2, PUBLIC_KEY, NULL, NULL);
 			}
 			else if(privin)
 			{
-				ret = decrypt(file4, file3, file1, PRIVATE_KEY);	
+				ret = decrypt(file4, file3, file1, PRIVATE_KEY, NULL, NULL);	
 			}
 			return ret;
 		}
 		else if (sign ==1)
 		{
 				generateSign(file4, file1, file3); 
+		}
+		else if(verifyData == 1)
+		{
+				verify(file4, file1, file2);
 		}
 }
