@@ -1,7 +1,7 @@
 #include "rsahelper.h"
 char* getMd5HashFromBuffer(char* plain_buff, int N);
 void getHashFromBitString(char* bitString, unsigned char* hash, int digest_length);
-int verify(char* signedFile, char* originalFile, char* pubKeyPath)
+int verify(char* signedFile, char* originalFile, char* certiPath)
 {
 	unsigned char* buf = (unsigned char*)malloc(MSG_BUF_LEN * sizeof(unsigned char));
 	unsigned char md5hash[MD5_DIGEST_LENGTH];
@@ -12,7 +12,8 @@ int verify(char* signedFile, char* originalFile, char* pubKeyPath)
 	unsigned char* plain_buff = (unsigned char*)malloc(MSG_BUF_LEN* sizeof(unsigned char));
 	memset(plain_buff, 0, MSG_BUF_LEN);
 	int plain_buff_size = 0;
-	decrypt(signedFile, NULL, pubKeyPath, PUBLIC_KEY, plain_buff, &plain_buff_size);
+	decrypt_verify(signedFile, certiPath, plain_buff, &plain_buff_size);
+	//decrypt(signedFile, NULL, pubKeyPath, PUBLIC_KEY, plain_buff, &plain_buff_size);
 	//writeEncryptedBuffer("out_trace", plain_buff, plain_buff_size);
 	char* md5BitSignature = getMd5HashFromBuffer(plain_buff, plain_buff_size);
 	if(md5BitSignature)

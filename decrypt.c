@@ -1,7 +1,49 @@
 #include "rsahelper.h"
-
+int extractInfoFromCerti(char* certiFile, mpz_t n, mpz_t e);
 int extractInfoFromKey(char* keyfile, mpz_t n, mpz_t d, int keyType);
 //decrypts only using the private keyfile
+
+int decrypt_verify(char* infile, char* certi_path, unsigned char* plain_buff, int* size_decrypt_buff)
+{
+		mpz_t d, p, n, integer_cipher;
+		mpz_init(d);
+		mpz_init(p);
+		mpz_init(n);
+		mpz_init(integer_cipher);
+		int i;
+		unsigned char* cipher = (unsigned char*)malloc(MSG_BUF_LEN* sizeof(unsigned char));
+		memset(cipher, 0, MSG_BUF_LEN);
+
+		int cipherLength = readFileInBuffer(infile, cipher);
+		int ret = extractInfoFromCerti(certi_path, n, d);
+		if(ret == 1)
+		{
+			printf("Extraction Failed from Private Key\n");
+			return 1;
+		}
+		int num_octets = mpz_sizeinbase(n, 2)/8;
+		if(num_octets != cipherLength)
+		{
+			printf("decryption error\n");
+			return 1;
+		}
+		
+		unsigned char* decrypted_buff = (unsigned char*)malloc((num_octets-1)*sizeof(unsigned char));
+		memset(decrypted_buff, 0, num_octets);
+		
+		OS2IP(integer_cipher, cipher, num_octets);
+		if(mpz_cmp(integer_cipher, n) >0)
+		{
+				printf("ciphertext representation out of range\n");
+				return 1;
+		}
+		//decryption
+		_encrypt(integer_cipher, d, p, n);
+		I2OSP(decrypted_buff, num_octets - 1, p);
+		int ret2 = getDecryptedBuffer(plain_buff, decrypted_buff, num_octets - 1, size_decrypt_buff);
+		return ret2;
+}
+
 
 int decrypt(char* infile, char* outfile, char* key, int keyType, unsigned char* plain_buff, int* size_decrypt_buff)
 {
@@ -104,6 +146,19 @@ int extractInfoFromKey(char* keyfile, mpz_t n, mpz_t d, int keyType)
 			mpz_set_str(n, root->children->next->child->children->child->children->child->content, 2);
 			mpz_set_str(d, root->children->next->child->children->child->children->next->child->content, 2);
 		}
+}
+
+int extractInfoFromCerti(char* certiFile, mpz_t n, mpz_t e)
+{
+		struct tree* root = parse(certiFile);
+		
+		#ifdef DEBUG1
+		printf("%s ", root->children->child->children->next->next->next->next->next->next->next->child->children->next->child->children->child->children->child->content);
+		printf("%s ", root->children->child->children->next->next->next->next->next->next->next->child->children->next->child->children->child->children->next->child->content);
+		#endif
+		mpz_set_str(n, root->children->child->children->next->next->next->next->next->next->next->child->children->next->child->children->child->children->child->content, 2);
+		mpz_set_str(e, root->children->child->children->next->next->next->next->next->next->next->child->children->next->child->children->child->children->next->child->content, 2);
+		
 }
 
 int readFileInBuffer(char* fileName, unsigned char * buf)

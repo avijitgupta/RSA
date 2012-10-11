@@ -78,7 +78,7 @@ extern void addOID(int *buf, int* index, const char* oid);
 extern void encrypt_buff(unsigned char* plain_buf, unsigned char* out_buf, char* keyfile, int keyType, int plain_buf_size, int* size_encrypted);
 extern void writeEncryptedBuffer(char* outfile, unsigned char* buf, int N);
 extern struct tree* parseFromBuff(unsigned char* buf, int N);
-extern int verify(char* signedFile, char* originalFile, char* pubKeyPath);
+extern int verify(char* signedFile, char* originalFile, char* certiPath);
 extern void _parse_display(struct tree* root);
 extern void generateSelfSignedCertificate(char* privKeyLocation, char* outCertificate);
 extern void displayBuffer(int* buf, int index, int maxIndex);

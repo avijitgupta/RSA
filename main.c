@@ -38,7 +38,8 @@ int main (int argc, char **argv)
 				{"sign", no_argument,				0,	's'	},
 				{"verify", no_argument,				0,	'v'	},
 				{"message", required_argument, 		0, 	'm' },
-				{"certout", required_argument, 		0, 	'c'	}			 
+				{"certout", required_argument, 		0, 	'c'	},
+				{"certin", required_argument, 		0, 	't' }			 
 			};
 		
 			c = getopt_long_only(argc, argv, "", long_options, &option_index);
@@ -113,6 +114,10 @@ int main (int argc, char **argv)
 									strcpy(certout, optarg);
 								else
 									displayOptions();
+					case 't':	if(optarg)
+									strcpy(file2, optarg);
+								else
+									displayOptions();
 			}
 			
 			
@@ -184,7 +189,7 @@ int main (int argc, char **argv)
 		}
 		else if (sign ==1)
 		{
-				//generateSign(file4, file1, file3); 
+				generateSign(file4, file1, file3); 
 				generateSelfSignedCertificate(file1, certout);
 		}
 		else if(verifyData == 1)
