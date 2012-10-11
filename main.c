@@ -4,9 +4,10 @@ void displayOptions()
 {
 	printf("Generate Ceritifcates:\n./rsaengine -genrsa -pubout public_key.der -privout priv_key.der\n");
 	printf("Encryption:\n./rsaengine -encrypt -pubin public_key.der -in message -out encrypted_message\n");
-	printf("Decryption:\n./rsaengine -genrsa -pubout public_key.der -privout priv_key.der\n");
-	printf("Sign:\n./rsaengine -sign -privin priv_key.der -message message -out signature_file -certout public_certificate.der\n");
-	printf("Verify:\n./rsaengine -verify -in signature_file -certin public_certificate.der -message message \n");
+	printf("Decryption:\n./rsaengine -decrypt -privin priv_key.der -in encrypted_message - out decrypted_msg\n");
+	printf("Sign:\n./rsaengine -sign -privin priv_key.der -in message -out signature_file -certout public_certificate.der\n");
+	printf("Verify:\n./rsaengine -verify -signature signature_file -certin public_certificate.der -in message \n");
+	printf("Parse:\n./rsaengine -asn1parse der_file \n");
 	
 }
 
@@ -42,7 +43,7 @@ int main (int argc, char **argv)
 				{"asn1parse", required_argument, 	0, 	'a'	},
 				{"sign", no_argument,				0,	's'	},
 				{"verify", no_argument,				0,	'v'	},
-				{"message", required_argument, 		0, 	'm' },
+				{"signature", required_argument, 	0, 	'm' },
 				{"certout", required_argument, 		0, 	'c'	},
 				{"certin", required_argument, 		0, 	't' }			 
 			};
@@ -241,6 +242,6 @@ int main (int argc, char **argv)
 						displayOptions();
 						return;
 				}
-				verify(file4, file1, file2);
+				verify(file1, file4, file2);
 		}
 }
