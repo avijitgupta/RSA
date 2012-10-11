@@ -13,7 +13,7 @@ Encryption:
 	OpenSSL decryption:
 	-------------------
 	openssl rsautl -decrypt -inkey priv_key.der -keyform der -in encrypted_message -out decrypted_msg
-	vimdiff message dectypted_msg
+	vimdiff message decrypted_msg
 
 Decryption:
 -----------
@@ -24,7 +24,7 @@ Decryption:
 
 
 ./rsaengine -decrypt -privin priv_key.der -in encrypted_message -out decrypted_msg
-vimdiff mesage decrypted_msg
+vimdiff message decrypted_msg
 
 Sign:
 -----

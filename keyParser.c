@@ -80,7 +80,7 @@ struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen)
 	
 	if(maxIndex - *start + 1 < 8)
 	{
-		printf("Certificate parse error");
+		printf("Certificate parse error 1");
 		return NULL;	
 	}
 	
@@ -111,18 +111,18 @@ struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen)
 								+ (buf[ *start + 4]<<3) + (buf[ *start + 5 ]<<2) + (buf[ *start + 6 ]<<1) + buf[ *start + 7];
 					len = (len << 8) + val;
 					*start+=8;
-					if(*start>maxIndex)
+				/*	if(*start>maxIndex)
 					{
-						printf("Certificate parse error");
+						printf("Certificate parse error 2");
 						return NULL;	
-					}
+					}*/
 			}
 			root->length = len;
 		}
 		
 		
 		//Extra options of the certificate are generally not filled in - break.. since we have parsed everythign else
-		if(*start + root->length > keyBufLen)
+		if(*start + root->length > keyBufLen || *start + root->length < 0)
 			return NULL;
 		//You are currently pointing on the first content octet
 

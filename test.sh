@@ -1,5 +1,5 @@
 
-for i in {1..100}
+for i in {1..200}
 do
 ./rsaengine -genrsa -pubout public_key.der -privout priv_key.der
 ./rsaengine -encrypt -pubin public_key.der -in message -out encrypted_message
