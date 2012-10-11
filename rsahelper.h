@@ -43,7 +43,7 @@
 #define LEN_FILE_NAME 1024
 #define PRIVATE_KEY 1
 #define PUBLIC_KEY 2
-
+#define CERTI 3
 
 
 //The ASN1 tree

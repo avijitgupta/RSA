@@ -1,7 +1,7 @@
 all: rsaengine
 
-rsaengine: main.o encrypt.o verify.o sign.o keyParser.o generate.o decrypt.o writeCertificate.o
-	   gcc main.o encrypt.o verify.o sign.o keyParser.o generate.o decrypt.o writeCertificate.o -o rsaengine -lgmp -lssl -lcrypto
+rsaengine: main.o encrypt.o verify.o sign.o keyParser.o generate.o decrypt.o writeCertificate.o converter.o
+	   gcc main.o encrypt.o verify.o sign.o keyParser.o generate.o decrypt.o writeCertificate.o converter.o -o rsaengine -lgmp -lssl -lcrypto
 
 generate.o: generate.c
 	    gcc -c generate.c -lgmp
@@ -26,6 +26,8 @@ verify.o:    verify.c
 
 writeCertificate.o:	writeCertificate.c
 			gcc -c writeCertificate.c -lgmp -lssl -lcrypto
+converter.o:		converter.c
+			gcc -c converter.c -lgmp -lssl -lcrypto	
 
 clean:	     
 	rm -f *.o

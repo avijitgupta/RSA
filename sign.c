@@ -24,7 +24,7 @@ int generateSignedBuffer(unsigned char* buf, unsigned char* signedBuf, int n, ch
 		num_octets = N_NUM_BITS/8;
 		MD5(buf, n, md5hash);
 		int protoLen = strlen(Md5OidValue)/2;
-		#ifdef DEBUG2
+		#ifdef DEBUG3
 			printf("MD5 HASH\n");
 			for (i = 0; i < MD5_DIGEST_LENGTH; i++) 
 			{
@@ -108,7 +108,7 @@ int generateSign(char* inputFile, char* privKeyFile, char* signedFile)
 		num_octets = N_NUM_BITS/8;
 		MD5(buf, n, md5hash);
 		int protoLen = strlen(Md5OidValue)/2;
-		#ifdef DEBUG2
+		#ifdef DEBUG3
 			printf("MD5 HASH\n");
 			for (i = 0; i < MD5_DIGEST_LENGTH; i++) 
 			{

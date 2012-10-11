@@ -8,13 +8,14 @@ void displayOptions()
 	printf("Sign:\n./rsaengine -sign -privin priv_key.der -in message -out signature_file -certout public_certificate.der\n");
 	printf("Verify:\n./rsaengine -verify -signature signature_file -certin public_certificate.der -in message \n");
 	printf("Parse:\n./rsaengine -asn1parse der_file \n");
+	printf("Convert to PEM: \n ./rsaengine -convert -in file.der -type pub/priv/certi -out file.pem\n");
 	
 }
 
 int main (int argc, char **argv)
 {
 		int c;
-		int generate = 0, encr = 0 , decr = 0, pubin = 0, privin = 0, parse =0, sign = 0, verifyData = 0;
+		int generate = 0, encr = 0 , decr = 0, pubin = 0, privin = 0, parse =0, sign = 0, verifyData = 0, convertF = 0;
 		char file1[LEN_FILE_NAME];
 		memset(file1, 0, LEN_FILE_NAME);
 		char file2[LEN_FILE_NAME];
@@ -25,7 +26,9 @@ int main (int argc, char **argv)
 		memset(file4, 0, LEN_FILE_NAME);
 		char certout[LEN_FILE_NAME];
 		memset(certout, 0, LEN_FILE_NAME);
-
+		char type[LEN_FILE_NAME];
+		memset(type, 0, LEN_FILE_NAME);
+		
 		while(1)
 		{
 			int option_index = 0;
@@ -45,7 +48,9 @@ int main (int argc, char **argv)
 				{"verify", no_argument,				0,	'v'	},
 				{"signature", required_argument, 	0, 	'm' },
 				{"certout", required_argument, 		0, 	'c'	},
-				{"certin", required_argument, 		0, 	't' }			 
+				{"certin", required_argument, 		0, 	't' },
+				{"convert", no_argument,	 		0, 	'z'	},
+				{"type", required_argument, 		0, 	'y'	}		 
 			};
 		
 			c = getopt_long_only(argc, argv, "", long_options, &option_index);
@@ -118,14 +123,24 @@ int main (int argc, char **argv)
 									strcpy(file1, optarg);
 								else
 									displayOptions();
+								break;
 					case 'c': 	if(optarg)
 									strcpy(certout, optarg);
 								else
 									displayOptions();
+								break;
 					case 't':	if(optarg)
 									strcpy(file2, optarg);
 								else
 									displayOptions();
+								break;
+					case 'z':	convertF = 1;
+								break;
+					case 'y':	if(optarg)
+									strcpy(type, optarg);
+								else
+									displayOptions();
+								break;
 			}
 			
 			
@@ -143,7 +158,22 @@ int main (int argc, char **argv)
 			parse_display(file4);
 			return 0;
 		}
-		
+		else if(convertF == 1)
+		{
+			if(strlen(type) == 0 || strlen(file4) == 0 || strlen(file3) == 0)
+				{
+						displayOptions();
+						return;
+				}
+			
+				if(strcmp(type, "priv")==0)
+					convert(PRIVATE_KEY, file4, file3);
+				if(strcmp(type, "pub")==0)
+					convert(PUBLIC_KEY, file4, file3);
+				if(strcmp(type, "certi")==0)
+					convert(CERTI, file4, file3);
+				return;
+		}
 		else if(generate == 1)
 		{
 				if(strcmp(file1, file2)!=0)
