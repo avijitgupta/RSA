@@ -2,6 +2,11 @@
 
 void displayOptions()
 {
+	printf("Generate Ceritifcates:\n./rsaengine -genrsa -pubout public_key.der -privout priv_key.der\n");
+	printf("Encryption:\n./rsaengine -encrypt -pubin public_key.der -in message -out encrypted_message\n");
+	printf("Decryption:\n./rsaengine -genrsa -pubout public_key.der -privout priv_key.der\n");
+	printf("Sign:\n./rsaengine -sign -privin priv_key.der -message message -out signature_file -certout public_certificate.der\n");
+	printf("Verify:\n./rsaengine -verify -in signature_file -certin public_certificate.der -message message \n");
 	
 }
 
@@ -27,7 +32,7 @@ int main (int argc, char **argv)
 				{"genrsa", no_argument, 			0,  'g' },
 				{"privout",  required_argument, 	0,  'r' },
 				{"pubout",  required_argument, 		0,  'u' },
-				{"help",  required_argument, 		0,  'h' },
+				{"help",  	no_argument, 			0,  'h' },
 				{"encrypt", no_argument,       		0,  'e' },
 				{"privin",    required_argument, 	0,  'i' },
 				{"out",  required_argument, 		0, 	'o'	},
@@ -48,6 +53,8 @@ int main (int argc, char **argv)
 			
 			switch(c)
 			{
+					case 'h': 	displayOptions();
+								break;
 					case 'g':	generate = 1;
 								break;
 					case 'r':	if(optarg)
@@ -126,6 +133,12 @@ int main (int argc, char **argv)
 		
 		if(parse == 1)
 		{
+			
+			if(strlen(file4) == 0 )
+			{
+					displayOptions();
+					return;
+			}
 			parse_display(file4);
 			return 0;
 		}
@@ -161,10 +174,22 @@ int main (int argc, char **argv)
 			int ret = 0;
 			if(pubin)
 			{
+				
+				if(strlen(file4) == 0 || strlen(file3) == 0 || strlen(file2) == 0)
+				{
+						displayOptions();
+						return;
+				}
 				ret = encrypt(file4, file3, file2, PUBLIC_KEY);
 			}
 			else if(privin)
 			{
+				
+				if(strlen(file4) == 0 || strlen(file1) == 0 || strlen(file3) == 0)
+				{
+						displayOptions();
+						return;
+				}
 				ret = encrypt(file4, file3, file1, PRIVATE_KEY);	
 			}
 			return ret;
@@ -179,21 +204,43 @@ int main (int argc, char **argv)
 			int ret = 0;
 			if(pubin)
 			{
+				
+				if(strlen(file4) == 0 || strlen(file3) == 0 || strlen(file2) == 0)
+				{
+						displayOptions();
+						return;
+				}
 				ret = decrypt(file4, file3, file2, PUBLIC_KEY, NULL, NULL);
 			}
 			else if(privin)
 			{
+				
+				if(strlen(file4) == 0 || strlen(file1) == 0 || strlen(file3) == 0)
+				{
+						displayOptions();
+						return;
+				}
 				ret = decrypt(file4, file3, file1, PRIVATE_KEY, NULL, NULL);	
 			}
 			return ret;
 		}
 		else if (sign ==1)
 		{
+				if(strlen(file4) == 0 || strlen(file1) == 0 || strlen(file3) == 0 || strlen(certout) == 0)
+				{
+						displayOptions();
+						return;
+				}
 				generateSign(file4, file1, file3); 
 				generateSelfSignedCertificate(file1, certout);
 		}
 		else if(verifyData == 1)
 		{
+				if(strlen(file4) == 0 || strlen(file1) == 0 || strlen(file2) == 0)
+				{
+						displayOptions();
+						return;
+				}
 				verify(file4, file1, file2);
 		}
 }
