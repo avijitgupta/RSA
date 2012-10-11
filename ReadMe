@@ -1,0 +1,60 @@
+						ReadMe
+						------
+
+Generate Ceritifcates:
+----------------------
+./rsaengine -genrsa -pubout public_key.der -privout priv_key.der
+
+Encryption:
+-----------
+
+./rsaengine -encrypt -pubin public_key.der -in message -out encrypted_message
+	
+	OpenSSL decryption:
+	-------------------
+	openssl rsautl -decrypt -inkey priv_key.der -keyform der -in encrypted_message -out decrypted_msg
+	vimdiff message dectypted_msg
+
+Decryption:
+-----------
+
+	OpenSSL encryption:
+	-------------------
+ 	openssl rsautl -encrypt -inkey public_key.der -pubin -keyform der -in message -out encrypted_message
+
+
+./rsaengine -decrypt -privin priv_key.der -in encrypted_message -out decrypted_msg
+vimdiff mesage decrypted_msg
+
+Sign:
+-----
+
+./rsaengine -sign -privin priv_key.der -in message -out signature_file -certout public_certificate.der
+
+	OpenSSL Verification:
+	--------------------
+	openssl dgst -md5 -verify public_key.der -keyform der -signature signature_file message
+
+
+Verify:
+-------
+
+	OpenSSL Signature:
+	------------------
+	openssl dgst -md5 -sign priv_key.der -keyform der -out signature_file message
+
+./rsaengine -verify -signature signature_file -certin public_certificate.der -in message
+
+Parse:
+------
+
+./rsaengine -asn1parse der_file 
+
+Convert to PEM:
+---------------
+
+./rsaengine -convert -in file.der -type pub/priv/certi -out file.pem
+
+
+Avijit Gupta
+108287277
