@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <openssl/md5.h>
+#include <openssl/sha.h>
+
 
 #define N_NUM_BITS 1024
 #define RSA_NUM_BITS 512
@@ -20,7 +22,8 @@
 #define PRIMITIVE 0
 #define CONSTRUCTED 1
 #define UNIVERSAL 0
-
+#define SHA1_LEN 20
+#define TAG_BOOLEAN 1
 #define TAG_SEQUENCE 16
 #define TAG_BIT_STRING 3
 #define TAG_NULL 5
@@ -31,10 +34,12 @@
 #define TAG_IA5_STRING 22
 #define TAG_UTC_TIME 23
 #define TAG_OCTET_STRING 4
+
 #define MD5_HASH_LEN 20
 #define PRIV_KEY_BUF_LEN 10240
 #define MSG_BUF_LEN 1024
 #define KEY_BUF_LEN 10240
+#define CERTI_LEN 10240
 #define LEN_FILE_NAME 1024
 #define PRIVATE_KEY 1
 #define PUBLIC_KEY 2
@@ -75,3 +80,10 @@ extern void writeEncryptedBuffer(char* outfile, unsigned char* buf, int N);
 extern struct tree* parseFromBuff(unsigned char* buf, int N);
 extern int verify(char* signedFile, char* originalFile, char* pubKeyPath);
 extern void _parse_display(struct tree* root);
+extern void generateSelfSignedCertificate(char* privKeyLocation, char* outCertificate);
+extern void displayBuffer(int* buf, int index, int maxIndex);
+extern void getOctetString(int *buf, unsigned char* octet_string,  int index, int maxIndex);
+extern void addUsualPublicKeyHeaders(int *pubKeyBuf, int* index, int* totalLength);
+extern void getOctetString(int *buf, unsigned char* octet_string,  int index, int maxIndex);
+extern int generateSignedBuffer(unsigned char* buf, unsigned char* signedBuf, int n, char* privKeyFile, int* size_encrypted);
+

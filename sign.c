@@ -14,6 +14,89 @@ void getOctetString(int *buf, unsigned char* octet_string,  int index, int maxIn
  * 
  */
 
+int generateSignedBuffer(unsigned char* buf, unsigned char* signedBuf, int n, char* privKeyFile, int* size_encrypted)
+{
+		int* encoded_buf = (int*)malloc(MSG_BUF_LEN * sizeof(int));
+		int  len_d_2 = 0;
+		unsigned char md5hash[MD5_DIGEST_LENGTH];
+		int i, index = MSG_BUF_LEN -1, numOctetsAdded=0, totalLength = 0, octet_string_len = 0, num_octets;
+		
+		num_octets = N_NUM_BITS/8;
+		MD5(buf, n, md5hash);
+		int protoLen = strlen(Md5OidValue)/2;
+		#ifdef DEBUG2
+			printf("MD5 HASH\n");
+			for (i = 0; i < MD5_DIGEST_LENGTH; i++) 
+			{
+				printf("%02x ", md5hash[i]);
+			}
+			printf("\n");
+		#endif
+		
+		//embed the md5 buffer
+		embed_md5_buffer(encoded_buf, md5hash, &index, MD5_DIGEST_LENGTH);
+		totalLength+= MD5_DIGEST_LENGTH;
+		
+		//append the length octet
+		numOctetsAdded = appendLengthToBuffer( MD5_DIGEST_LENGTH , encoded_buf, &index);
+		totalLength+=numOctetsAdded;
+		//append the identifier octet
+		appendIdentifierOctet(TAG_OCTET_STRING, PRIMITIVE, 0, encoded_buf, &index);
+		totalLength++;
+		
+		//Add length octet - 0
+		numOctetsAdded = appendLengthToBuffer( 0 , encoded_buf, &index);
+		totalLength+=numOctetsAdded;
+		len_d_2 += numOctetsAdded;
+		
+		//Add identifier octet
+		appendIdentifierOctet(TAG_NULL, PRIMITIVE, UNIVERSAL, encoded_buf, &index);
+		totalLength++;
+		len_d_2++;
+		
+		//append the MD5 object identifier value
+		addOID(encoded_buf, &index, Md5OidValue);
+		totalLength+=protoLen;
+		len_d_2+=protoLen;
+		
+		//add length of the identifier
+		numOctetsAdded = appendLengthToBuffer( protoLen , encoded_buf, &index);
+		totalLength+=numOctetsAdded;
+		len_d_2+=numOctetsAdded;
+		
+		//add identifier octet
+		appendIdentifierOctet(TAG_OID, PRIMITIVE, UNIVERSAL, encoded_buf, &index);
+		totalLength++;
+		len_d_2++;
+		
+		//add length octet
+		numOctetsAdded = appendLengthToBuffer( len_d_2 , encoded_buf, &index);
+		totalLength+=numOctetsAdded;
+		
+		//add identifier octet
+		appendIdentifierOctet(TAG_SEQUENCE, CONSTRUCTED, UNIVERSAL, encoded_buf, &index);
+		totalLength++;
+		
+		//add length octet
+		appendLengthToBuffer( totalLength , encoded_buf, &index);
+		
+		//add identifier octet
+		appendIdentifierOctet(TAG_SEQUENCE, CONSTRUCTED, UNIVERSAL, encoded_buf, &index);
+		#ifdef DEBUG2
+			displayBuffer(encoded_buf, index+1,  MSG_BUF_LEN);
+		#endif
+		
+		octet_string_len = (MSG_BUF_LEN - index - 1)/8;
+
+		unsigned char* octet_string = (unsigned char*)malloc(octet_string_len * sizeof(unsigned char));
+		memset(octet_string, 0, octet_string_len);
+		
+		getOctetString(encoded_buf, octet_string, index+1, MSG_BUF_LEN);
+		
+		encrypt_buff(octet_string, signedBuf, privKeyFile, PRIVATE_KEY, octet_string_len, size_encrypted);
+
+}
+
 int generateSign(char* inputFile, char* privKeyFile, char* signedFile)
 {
 		unsigned char* buf = (unsigned char*)malloc(MSG_BUF_LEN*sizeof(unsigned char));
@@ -134,6 +217,7 @@ void getOctetString(int *buf, unsigned char* octet_string,  int index, int maxIn
 						
 				}
 				octet_string[i] = ch;
+				//printf("%d ", ch);
 		}	
 }
 

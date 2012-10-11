@@ -17,7 +17,9 @@ int main (int argc, char **argv)
 		memset(file3, 0, LEN_FILE_NAME);
 		char file4[LEN_FILE_NAME];
 		memset(file4, 0, LEN_FILE_NAME);
-		
+		char certout[LEN_FILE_NAME];
+		memset(certout, 0, LEN_FILE_NAME);
+
 		while(1)
 		{
 			int option_index = 0;
@@ -35,7 +37,8 @@ int main (int argc, char **argv)
 				{"asn1parse", required_argument, 	0, 	'a'	},
 				{"sign", no_argument,				0,	's'	},
 				{"verify", no_argument,				0,	'v'	},
-				{"message", required_argument, 		0, 	'm'}			 
+				{"message", required_argument, 		0, 	'm' },
+				{"certout", required_argument, 		0, 	'c'	}			 
 			};
 		
 			c = getopt_long_only(argc, argv, "", long_options, &option_index);
@@ -104,6 +107,10 @@ int main (int argc, char **argv)
 								break;
 					case 'm':	if(optarg)
 									strcpy(file1, optarg);
+								else
+									displayOptions();
+					case 'c': 	if(optarg)
+									strcpy(certout, optarg);
 								else
 									displayOptions();
 			}
@@ -177,7 +184,8 @@ int main (int argc, char **argv)
 		}
 		else if (sign ==1)
 		{
-				generateSign(file4, file1, file3); 
+				//generateSign(file4, file1, file3); 
+				generateSelfSignedCertificate(file1, certout);
 		}
 		else if(verifyData == 1)
 		{

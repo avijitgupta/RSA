@@ -630,7 +630,7 @@ void displayBuffer(int* buf, int index, int maxIndex)
 				printf("%d ", buf[i]);
 				i++;
 			}
-			printf("\n");
+			//printf("\n");
 		}
 }
 void writeSampleFile()
