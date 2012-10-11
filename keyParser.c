@@ -111,11 +111,6 @@ struct tree* asn1parse(int* buf, int *start, int maxIndex, int keyBufLen)
 								+ (buf[ *start + 4]<<3) + (buf[ *start + 5 ]<<2) + (buf[ *start + 6 ]<<1) + buf[ *start + 7];
 					len = (len << 8) + val;
 					*start+=8;
-				/*	if(*start>maxIndex)
-					{
-						printf("Certificate parse error 2");
-						return NULL;	
-					}*/
 			}
 			root->length = len;
 		}

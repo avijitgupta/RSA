@@ -1,5 +1,14 @@
 						ReadMe
-						------
+						======
+
+Compiling:
+==========
+
+make clean
+make
+
+Execution:
+==========
 
 Generate Ceritifcates:
 ----------------------
