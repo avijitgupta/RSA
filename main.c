@@ -4,7 +4,7 @@ void displayOptions()
 {
 	printf("Generate Ceritifcates:\n./rsaengine -genrsa -pubout public_key.der -privout priv_key.der\n");
 	printf("Encryption:\n./rsaengine -encrypt -pubin public_key.der -in message -out encrypted_message\n");
-	printf("Decryption:\n./rsaengine -decrypt -privin priv_key.der -in encrypted_message - out decrypted_msg\n");
+	printf("Decryption:\n./rsaengine -decrypt -privin priv_key.der -in encrypted_message -out decrypted_msg\n");
 	printf("Sign:\n./rsaengine -sign -privin priv_key.der -in message -out signature_file -certout public_certificate.der\n");
 	printf("Verify:\n./rsaengine -verify -signature signature_file -certin public_certificate.der -in message \n");
 	printf("Parse:\n./rsaengine -asn1parse der_file \n");

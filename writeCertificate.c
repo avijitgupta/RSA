@@ -406,12 +406,12 @@ void generateSelfSignedCertificate(char* privKeyLocation, char* outCertificate)
 	totalLength = totalLength + 1;
 	// Added version #
 	
-	// add cont[3]
+	// add cont[0]
 	
 	numOctetsAdded = appendLengthToBuffer( len5, certificateBuffer, &certificate_ptr);
 	totalLength = totalLength + numOctetsAdded;
 	
-	appendIdentifierOctet(0, PRIMITIVE, 2, certificateBuffer, &certificate_ptr);
+	appendIdentifierOctet(0, CONSTRUCTED, 2, certificateBuffer, &certificate_ptr);
 	totalLength++;
 	
 	//sequenceWrapper

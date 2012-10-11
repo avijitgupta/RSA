@@ -12,6 +12,7 @@ int verify(char* signedFile, char* originalFile, char* certiPath)
 	unsigned char* plain_buff = (unsigned char*)malloc(MSG_BUF_LEN* sizeof(unsigned char));
 	memset(plain_buff, 0, MSG_BUF_LEN);
 	int plain_buff_size = 0;
+	//printf("Sign: %s Orig: %s Certi: %s", signedFile, originalFile, certiPath);
 	decrypt_verify(signedFile, certiPath, plain_buff, &plain_buff_size);
 	//decrypt(signedFile, NULL, pubKeyPath, PUBLIC_KEY, plain_buff, &plain_buff_size);
 	//writeEncryptedBuffer("out_trace", plain_buff, plain_buff_size);
@@ -37,8 +38,6 @@ int verify(char* signedFile, char* originalFile, char* certiPath)
 char* getMd5HashFromBuffer(char* plain_buff, int N)
 {
 	struct tree* root = parseFromBuff(plain_buff, N);
-	//_parse_display(root);
-	//printf("Hash %s", root->children->next->child->content);
 	if(root)
 	{
 		if(root->children)

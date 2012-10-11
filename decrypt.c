@@ -151,13 +151,14 @@ int extractInfoFromKey(char* keyfile, mpz_t n, mpz_t d, int keyType)
 int extractInfoFromCerti(char* certiFile, mpz_t n, mpz_t e)
 {
 		struct tree* root = parse(certiFile);
-		
+		//_parse_display(root);
 		#ifdef DEBUG1
-			printf("%s ", root->children->child->children->next->next->next->next->next->next->next->child->children->next->child->children->child->children->child->content);
-			printf("%s ", root->children->child->children->next->next->next->next->next->next->next->child->children->next->child->children->child->children->next->child->content);
+			//printf("%lld ", root->children->child->children->next->next->next->next->next->next->child->children->next->child->children->child->children->child->length);
+			printf("%s ", root->children->child->children->next->next->next->next->next->next->child->children->next->child->children->child->children->child->content);
+			printf("%s ", root->children->child->children->next->next->next->next->next->next->child->children->next->child->children->child->children->next->child->content);
 		#endif
-		mpz_set_str(n, root->children->child->children->next->next->next->next->next->next->next->child->children->next->child->children->child->children->child->content, 2);
-		mpz_set_str(e, root->children->child->children->next->next->next->next->next->next->next->child->children->next->child->children->child->children->next->child->content, 2);
+		mpz_set_str(n, root->children->child->children->next->next->next->next->next->next->child->children->next->child->children->child->children->child->content, 2);
+		mpz_set_str(e, root->children->child->children->next->next->next->next->next->next->child->children->next->child->children->child->children->next->child->content, 2);
 		
 }
 
